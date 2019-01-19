@@ -68,51 +68,50 @@ class PyGameView(object):
 
         if not self.model.controller.bypass and self.model.airis.display_hold:
             self.model.controller.mind_len = len(self.model.airis.display_plan)
-            self.model.controller.mind_action = self.model.airis.display_plan[self.model.controller.mind_index][1]
             if self.mind_index_prev != self.model.controller.mind_index:
                 print('Viewing plan step ' + str(self.model.controller.mind_index) + ' of ' + str(
-                    self.model.controller.mind_len - 1) + ' (predicted result of ' + self.model.controller.mind_action + ')')
+                    self.model.controller.mind_len - 1) + ' (predicted result)')
                 self.mind_index_prev = self.model.controller.mind_index
 
             # draw each position in the grid
             try:
                 for x in range(w):
                     for y in range(h):
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 0:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 0:
                             self.rep_map[x][y] = self.model.floor
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 1:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 1:
                             self.rep_map[x][y] = self.model.character
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 2:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 2:
                             self.rep_map[x][y] = self.model.wall
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 3:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 3:
                             self.rep_map[x][y] = self.model.battery
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 4:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 4:
                             self.rep_map[x][y] = self.model.door
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 5:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 5:
                             self.rep_map[x][y] = self.model.key
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 6:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 6:
                             self.rep_map[x][y] = self.model.extinguisher
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 7:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 7:
                             self.rep_map[x][y] = self.model.fire
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 8:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 8:
                             self.rep_map[x][y] = self.model.right_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 9:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 9:
                             self.rep_map[x][y] = self.model.left_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 10:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 10:
                             self.rep_map[x][y] = self.model.down_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 11:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 11:
                             self.rep_map[x][y] = self.model.up_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 12:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 12:
                             self.rep_map[x][y] = self.model.open_door
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 13:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 13:
                             self.rep_map[x][y] = self.model.character_on_right_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 14:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 14:
                             self.rep_map[x][y] = self.model.character_on_left_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 15:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 15:
                             self.rep_map[x][y] = self.model.character_on_down_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 16:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 16:
                             self.rep_map[x][y] = self.model.character_on_up_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index][0]].vis_env[x][y] == 17:
+                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 17:
                             self.rep_map[x][y] = self.model.character_on_open_door
 
                         self.rep_map[x][y].draw_representation_image(self, x, y)
