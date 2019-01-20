@@ -1990,6 +1990,9 @@ class AIRIS(object):
                         else:
                             heapq.heappop(condition_count_heap)
 
+                        if not condition_count_heap:
+                            break
+
             elif condition_heap:
                 pprint('No condition_count_heap!', num_indents=num_indents + 1)
                 pprint(str(condition_heap), num_indents=num_indents + 1)
