@@ -8,7 +8,7 @@ Requires Python 3.x
 
 See "requirements.txt" for additional required packages
 
-###### This is the Cognitive Architecture of AIRIS 
+###### The Cognitive Architecture of AIRIS 
 ![AIRIS Cognitive Architecture](https://airisai.files.wordpress.com/2019/01/airis-cognitive-architecture-3.png)
 
 # Example Tests
@@ -20,7 +20,7 @@ A grid-world puzzle game with various obstacles. The goal is to collect all batt
 
 ![Puzzle Game Level](https://airisai.files.wordpress.com/2019/01/puzzle-game-level.png)
 
-[Gif of AIRIS Completing a puzzle](https://airisai.files.wordpress.com/2018/03/level.gif)
+[Gif of AIRIS Completing the puzzle](https://airisai.files.wordpress.com/2018/03/level.gif)
 
 ###### puzzle_game_driver.py additional controls
 
@@ -38,3 +38,5 @@ To disable "view plan" mode, hold the Down Arrow
 Number recognition using the MNIST hand-written character dataset
 
 ![MNIST Character](https://airisai.files.wordpress.com/2018/03/sprite0_4.png)
+
+## Special Thanks to Lucious Dickerson for helping to teach me Python, fixing my newbie mistakes, and for porting the test environments!
