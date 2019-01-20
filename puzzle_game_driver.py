@@ -1220,7 +1220,6 @@ if __name__ == '__main__':
     airis_controlled = True
     pygame.init()
     pygame.display.set_caption('Airis '+str(id(pygame)))
-    print(f'\33]0;{id(pygame)}\a', end='', flush=True)
     controller = PyGameKeyboardController()
     model = Model(controller, airis_controlled)
     if GAME_SHOW_SCREEN:
