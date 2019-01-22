@@ -39,4 +39,4 @@ Number recognition using the MNIST hand-written character dataset
 
 ![MNIST Character](https://airisai.files.wordpress.com/2018/03/sprite0_4.png)
 
-## Special Thanks to Lucious Dickerson for helping to teach me Python, fixing my newbie mistakes, and for porting the test environments!
+## Special Thanks to Lucius Dickerson for helping to teach me Python, fixing my newbie mistakes, and for porting the test environments!
