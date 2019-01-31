@@ -155,217 +155,234 @@ class AIRIS(object):
             pprint('\\--------------------------------------------------------/\n')
 
     def print_models(self, new_line_start=False, new_line_end=False):
-        if new_line_start:
-            print()
-        print('\nModels:')
-        print('num models = %s' % len(self.models))
-        for index, model in enumerate(self.models):
-            print('Model %d:' % index)
-            model.print_model(vis_env=True, aux_env=True,
-                                compare=True, best_condition=True)
-        if new_line_end:
-            print()
+        if DEBUG_WITH_CONSOLE or DEBUG_WITH_LOGFILE:
+            if new_line_start:
+                print()
+            print('\nModels:')
+            print('num models = %s' % len(self.models))
+            for index, model in enumerate(self.models):
+                print('Model %d:' % index)
+                model.print_model(vis_env=True, aux_env=True,
+                                    compare=True, best_condition=True)
+            if new_line_end:
+                print()
 
     def print_global_sets(self, indent=DEFAULT_INDENT, num_indents=0,
                           new_line_start=False, new_line_end=False,
                           draw_line=DEFAULT_DRAW_LINE):
 
-        pprint('Global Sets:', indent=indent, num_indents=num_indents,
-            new_line_start=new_line_start, draw_line=draw_line)
+        if DEBUG_WITH_CONSOLE or DEBUG_WITH_LOGFILE:
 
-        pprint('all visual values ever seen:   \t%s' %
-            np.array(list(self.vis_global_set)).astype(int),
-            indent=indent, num_indents=num_indents + 1)
+            pprint('Global Sets:', indent=indent, num_indents=num_indents,
+                new_line_start=new_line_start, draw_line=draw_line)
 
-        pprint('all focus values ever seen:   \t%s' %
-            np.array(list(self.focus_global_set)).astype(int),
-            indent=indent, num_indents=num_indents + 1)
+            pprint('all visual values ever seen:   \t%s' %
+                np.array(list(self.vis_global_set)).astype(int),
+                indent=indent, num_indents=num_indents + 1)
 
-        pprint('all auxiliary values ever seen:\t%s' %
-            np.array(list(self.aux_global_set)).astype(int),
-            indent=indent, num_indents=num_indents + 1,
-            new_line_end=new_line_end, draw_line=draw_line)
+            pprint('all focus values ever seen:   \t%s' %
+                np.array(list(self.focus_global_set)).astype(int),
+                indent=indent, num_indents=num_indents + 1)
+
+            pprint('all auxiliary values ever seen:\t%s' %
+                np.array(list(self.aux_global_set)).astype(int),
+                indent=indent, num_indents=num_indents + 1,
+                new_line_end=new_line_end, draw_line=draw_line)
 
     def print_goal_source(self, indent=DEFAULT_INDENT, num_indents=0,
                           new_line_start=False, new_line_end=False,
                           draw_line=DEFAULT_DRAW_LINE):
 
-        pprint('Goal Source:',
-            indent=indent, num_indents=num_indents,
-            new_line_start=new_line_start, draw_line=draw_line)
+        if DEBUG_WITH_CONSOLE or DEBUG_WITH_LOGFILE:
 
-        pprint('Source value:\t%s' % self.goal_source['value'],
-            indent=indent, num_indents=num_indents + 1)
-        pprint('x:    \t%s' % self.goal_source['x'],
-            indent=indent, num_indents=num_indents + 1)
-        pprint('y:    \t%s' % self.goal_source['y'],
-            indent=indent, num_indents=num_indents + 1)
-        pprint('i:    \t%s' % self.goal_source['i'],
-            indent=indent, num_indents=num_indents + 1)
-        pprint('Goal value:    \t%s' % self.goal_value,
-            indent=indent, num_indents=num_indents + 1,
-            new_line_end=new_line_end, draw_line=draw_line)
+            pprint('Goal Source:',
+                indent=indent, num_indents=num_indents,
+                new_line_start=new_line_start, draw_line=draw_line)
+
+            pprint('Source value:\t%s' % self.goal_source['value'],
+                indent=indent, num_indents=num_indents + 1)
+            pprint('x:    \t%s' % self.goal_source['x'],
+                indent=indent, num_indents=num_indents + 1)
+            pprint('y:    \t%s' % self.goal_source['y'],
+                indent=indent, num_indents=num_indents + 1)
+            pprint('i:    \t%s' % self.goal_source['i'],
+                indent=indent, num_indents=num_indents + 1)
+            pprint('Goal value:    \t%s' % self.goal_value,
+                indent=indent, num_indents=num_indents + 1,
+                new_line_end=new_line_end, draw_line=draw_line)
 
     def print_change_lists(self, indent=DEFAULT_INDENT, num_indents=0,
                            new_line_start=False, new_line_end=False,
                            draw_line=DEFAULT_DRAW_LINE):
 
-        pprint('Visual Change List:   \t\t%s' % self.vis_change_list,
-            indent=indent, num_indents=num_indents,
-            new_line_start=new_line_start, draw_line=draw_line)
+        if DEBUG_WITH_CONSOLE or DEBUG_WITH_LOGFILE:
 
-        pprint('Auxiliary Change List:\t\t%s' % self.aux_change_list,
-            indent=indent, num_indents=num_indents,
-            new_line_end=new_line_end, draw_line=draw_line)
+            pprint('Visual Change List:   \t\t%s' % self.vis_change_list,
+                indent=indent, num_indents=num_indents,
+                new_line_start=new_line_start, draw_line=draw_line)
+
+            pprint('Auxiliary Change List:\t\t%s' % self.aux_change_list,
+                indent=indent, num_indents=num_indents,
+                new_line_end=new_line_end, draw_line=draw_line)
 
     def print_condition_id(self, indent=DEFAULT_INDENT, num_indents=0,
                            new_line_start=False, new_line_end=False,
                            draw_line=DEFAULT_DRAW_LINE):
 
-        pprint('Condition ID:\t\t%s' % self.condition_id,
-            indent=indent, num_indents=num_indents,
-            new_line_start=new_line_start, new_line_end=new_line_end,
-            draw_line=draw_line)
+        if DEBUG_WITH_CONSOLE or DEBUG_WITH_LOGFILE:
+
+            pprint('Condition ID:\t\t%s' % self.condition_id,
+                indent=indent, num_indents=num_indents,
+                new_line_start=new_line_start, new_line_end=new_line_end,
+                draw_line=draw_line)
 
     def print_knowledge(self, indent=DEFAULT_INDENT, num_indents=0,
                          new_line_start=False, new_line_end=False,
                          draw_line=DEFAULT_DRAW_LINE):
 
-        pprint('Knowledge:', indent=indent, num_indents=num_indents,
-            new_line_start=new_line_start, draw_line=draw_line)
-        pprint('size: %s' % sys.getsizeof(self.knowledge),
-            indent=indent, num_indents=num_indents + 1)
+        if DEBUG_WITH_CONSOLE or DEBUG_WITH_LOGFILE:
 
-        if self.knowledge:
-            pprint('Actions:', indent=indent, num_indents=num_indents + 1)
-            for action in self.knowledge['action set']:
-                action = str(action)
-                action_path = action
-                try:
-                    action_outputs = self.knowledge[action_path]
-                    pprint(action, indent=indent, num_indents=num_indents + 2)
-                    pprint('Outputs:', indent=indent, num_indents=num_indents + 3)
-                    for output in action_outputs:
-                        output = str(output)
-                        output_path = action_path + '/' + output
-                        try:
-                            condition_focus_values = self.knowledge[output_path]
-                            pprint(output, indent=indent, num_indents=num_indents + 4)
-                            pprint('Condition Focus Values:', indent=indent, num_indents=num_indents + 5)
-                            for condition_focus_value in condition_focus_values:
-                                condition_focus_value = str(condition_focus_value)
-                                focus_path = output_path + '/' + condition_focus_value
-                                try:
-                                    condition_ids = self.knowledge[focus_path]
-                                    pprint(condition_focus_value, indent=indent, num_indents=num_indents + 6)
-                                    pprint('Condition IDs:', indent=indent, num_indents=num_indents + 7)
-                                    for condition_id in condition_ids:
-                                        condition_id = str(condition_id)
-                                        id_path = focus_path + '/' + condition_id
-                                        try:
-                                            # path + '/posterior_val' is used b/c all conditions have one
-                                            id_exists = self.knowledge[id_path + '/posterior_val']
-                                            pprint(condition_id, indent=indent, num_indents=num_indents + 8)
-                                        except:
-                                            continue  # don't search for knowledge of this condition_id if it doesnt exist
-                                        try:
-                                            pprint('rel_abs:        %s' % self.knowledge[id_path + '/rel_abs'], indent=indent, num_indents=num_indents + 9)
-                                        except KeyError:
-                                            pass
-                                        try:
-                                            pprint('posterior_val:        %s' % self.knowledge[id_path + '/posterior_val'], indent=indent, num_indents=num_indents + 9)
-                                        except KeyError:
-                                            pass
-                                        try:
-                                            x, y = self.knowledge[id_path + '/focus_x'], self.knowledge[id_path + '/focus_y']
-                                            pprint('(focus_x, focus_y):   (%s, %s)' % (x, y), indent=indent, num_indents=num_indents + 9)
-                                        except KeyError:
-                                            pass
-                                        try:
-                                            pprint('focus_i:              %s' % self.knowledge[id_path + '/focus_i'], indent=indent, num_indents=num_indents + 9)
-                                        except KeyError:
-                                            pass
-                                        try:
-                                            pprint('aux_ref:              %s' % self.knowledge[id_path + '/aux_ref'], indent=indent, num_indents=num_indents + 9)
-                                        except KeyError:
-                                            pass
-                                        try:
-                                            pprint('aux_data:             %s' % self.knowledge[id_path + '/aux_data'], indent=indent, num_indents=num_indents + 9)
-                                        except KeyError:
-                                            pass
-                                        try:
-                                            pprint('vis_ref:              %s' % self.knowledge[id_path + '/vis_ref'], indent=indent, num_indents=num_indents + 9)
-                                        except KeyError:
-                                            pass
-                                        try:
-                                            print_vis_env(self.knowledge[id_path + '/vis_data'], title='vis_data', indent=indent, num_indents=num_indents + 9)
-                                        except KeyError:
-                                            pass
-                                        try:
-                                            pprint('post_aux_data:             %s' % self.knowledge[id_path + '/post_aux_data'], indent=indent, num_indents=num_indents + 9)
-                                        except KeyError:
-                                            pass
-                                        try:
-                                            print_vis_env(self.knowledge[id_path + '/post_vis_data'], title='post_vis_data', indent=indent, num_indents=num_indents + 9)
-                                        except KeyError:
-                                            pass
-                                except KeyError:
-                                    pass
-                        except KeyError:
-                            pass
-                except KeyError:
-                    pass
-        else:
-            pprint('Empty', indent=indent, num_indents=num_indents + 1)
+            pprint('Knowledge:', indent=indent, num_indents=num_indents,
+                new_line_start=new_line_start, draw_line=draw_line)
+            pprint('size: %s' % sys.getsizeof(self.knowledge),
+                indent=indent, num_indents=num_indents + 1)
 
-        # bug: the line isn't drawn regardless, buts not a big deal
-        if new_line_end:
-            pprint('', indent=indent, num_indents=num_indents, draw_line=draw_line)
+            if self.knowledge:
+                pprint('Actions:', indent=indent, num_indents=num_indents + 1)
+                for action in self.knowledge['action set']:
+                    action = str(action)
+                    action_path = action
+                    try:
+                        action_outputs = self.knowledge[action_path]
+                        pprint(action, indent=indent, num_indents=num_indents + 2)
+                        pprint('Outputs:', indent=indent, num_indents=num_indents + 3)
+                        for output in action_outputs:
+                            output = str(output)
+                            output_path = action_path + '/' + output
+                            try:
+                                condition_focus_values = self.knowledge[output_path]
+                                pprint(output, indent=indent, num_indents=num_indents + 4)
+                                pprint('Condition Focus Values:', indent=indent, num_indents=num_indents + 5)
+                                for condition_focus_value in condition_focus_values:
+                                    condition_focus_value = str(condition_focus_value)
+                                    focus_path = output_path + '/' + condition_focus_value
+                                    try:
+                                        condition_ids = self.knowledge[focus_path]
+                                        pprint(condition_focus_value, indent=indent, num_indents=num_indents + 6)
+                                        pprint('Condition IDs:', indent=indent, num_indents=num_indents + 7)
+                                        for condition_id in condition_ids:
+                                            condition_id = str(condition_id)
+                                            id_path = focus_path + '/' + condition_id
+                                            try:
+                                                # path + '/posterior_val' is used b/c all conditions have one
+                                                id_exists = self.knowledge[id_path + '/posterior_val']
+                                                pprint(condition_id, indent=indent, num_indents=num_indents + 8)
+                                            except:
+                                                continue  # don't search for knowledge of this condition_id if it doesnt exist
+                                            try:
+                                                pprint('rel_abs:        %s' % self.knowledge[id_path + '/rel_abs'], indent=indent, num_indents=num_indents + 9)
+                                            except KeyError:
+                                                pass
+                                            try:
+                                                pprint('posterior_val:        %s' % self.knowledge[id_path + '/posterior_val'], indent=indent, num_indents=num_indents + 9)
+                                            except KeyError:
+                                                pass
+                                            try:
+                                                x, y = self.knowledge[id_path + '/focus_x'], self.knowledge[id_path + '/focus_y']
+                                                pprint('(focus_x, focus_y):   (%s, %s)' % (x, y), indent=indent, num_indents=num_indents + 9)
+                                            except KeyError:
+                                                pass
+                                            try:
+                                                pprint('focus_i:              %s' % self.knowledge[id_path + '/focus_i'], indent=indent, num_indents=num_indents + 9)
+                                            except KeyError:
+                                                pass
+                                            try:
+                                                pprint('aux_ref:              %s' % self.knowledge[id_path + '/aux_ref'], indent=indent, num_indents=num_indents + 9)
+                                            except KeyError:
+                                                pass
+                                            try:
+                                                pprint('aux_data:             %s' % self.knowledge[id_path + '/aux_data'], indent=indent, num_indents=num_indents + 9)
+                                            except KeyError:
+                                                pass
+                                            try:
+                                                pprint('vis_ref:              %s' % self.knowledge[id_path + '/vis_ref'], indent=indent, num_indents=num_indents + 9)
+                                            except KeyError:
+                                                pass
+                                            try:
+                                                print_vis_env(self.knowledge[id_path + '/vis_data'], title='vis_data', indent=indent, num_indents=num_indents + 9)
+                                            except KeyError:
+                                                pass
+                                            try:
+                                                pprint('post_aux_data:             %s' % self.knowledge[id_path + '/post_aux_data'], indent=indent, num_indents=num_indents + 9)
+                                            except KeyError:
+                                                pass
+                                            try:
+                                                print_vis_env(self.knowledge[id_path + '/post_vis_data'], title='post_vis_data', indent=indent, num_indents=num_indents + 9)
+                                            except KeyError:
+                                                pass
+                                    except KeyError:
+                                        pass
+                            except KeyError:
+                                pass
+                    except KeyError:
+                        pass
+            else:
+                pprint('Empty', indent=indent, num_indents=num_indents + 1)
+
+            # bug: the line isn't drawn regardless, buts not a big deal
+            if new_line_end:
+                pprint('', indent=indent, num_indents=num_indents, draw_line=draw_line)
 
     def print_knowledge_dictionary_raw(self, indent=DEFAULT_INDENT, num_indents=0,
                            new_line_start=False, new_line_end=False,
                            draw_line=DEFAULT_DRAW_LINE):
 
-        pprint('Knowledge:', indent=indent, num_indents=num_indents,
-            new_line_start=new_line_start, draw_line=draw_line)
+        if DEBUG_WITH_CONSOLE or DEBUG_WITH_LOGFILE:
 
-        if self.knowledge:
-            first = True
-            for k, v in self.knowledge.items():
+            pprint('Knowledge:', indent=indent, num_indents=num_indents,
+                new_line_start=new_line_start, draw_line=draw_line)
 
-                if first:
-                    first = False
-                    pprint('key:     %s' % k, indent=indent, num_indents=num_indents + 1)
-                else:
-                    pprint('key:     %s' % k, indent=indent,
-                        num_indents=num_indents + 1, new_line_start=True, draw_line=False)
+            if self.knowledge:
+                first = True
+                for k, v in self.knowledge.items():
 
-                if isinstance(v, np.ndarray) and v.ndim == 2:
-                    pprint('value:', indent=indent, num_indents=num_indents + 1)
-                    print_vis_env(v, indent=indent, num_indents=num_indents + 1)
-                else:
-                    pprint('value:   %s' % v, indent=indent, num_indents=num_indents + 1)
+                    if first:
+                        first = False
+                        pprint('key:     %s' % k, indent=indent, num_indents=num_indents + 1)
+                    else:
+                        pprint('key:     %s' % k, indent=indent,
+                            num_indents=num_indents + 1, new_line_start=True, draw_line=False)
 
-        else:
-            pprint('Empty', indent=indent, num_indents=num_indents + 1)
+                    if isinstance(v, np.ndarray) and v.ndim == 2:
+                        pprint('value:', indent=indent, num_indents=num_indents + 1)
+                        print_vis_env(v, indent=indent, num_indents=num_indents + 1)
+                    else:
+                        pprint('value:   %s' % v, indent=indent, num_indents=num_indents + 1)
+
+            else:
+                pprint('Empty', indent=indent, num_indents=num_indents + 1)
 
     def print_focus_value(self, indent=DEFAULT_INDENT, num_indents=0,
                           new_line_start=False, new_line_end=False,
                           draw_line=DEFAULT_DRAW_LINE):
 
-        pprint('Focus Value:\t\t%s' % self.models[self.current_model_index].focus_value,
-            indent=indent, num_indents=num_indents,
-            new_line_start=new_line_start, new_line_end=new_line_end,
-            draw_line=draw_line)
+        if DEBUG_WITH_CONSOLE or DEBUG_WITH_LOGFILE:
+
+            pprint('Focus Value:\t\t%s' % self.models[self.current_model_index].focus_value,
+                indent=indent, num_indents=num_indents,
+                new_line_start=new_line_start, new_line_end=new_line_end,
+                draw_line=draw_line)
 
     def print_goal_condition(self, indent=DEFAULT_INDENT, num_indents=0,
                           new_line_start=False, new_line_end=False,
                           draw_line=DEFAULT_DRAW_LINE):
 
-        pprint('Goal Condition:\t\t%s' % self.goal_condition,
-            indent=indent, num_indents=num_indents,
-            new_line_start=new_line_start, new_line_end=new_line_end,
-            draw_line=draw_line)
+        if DEBUG_WITH_CONSOLE or DEBUG_WITH_LOGFILE:
+
+            pprint('Goal Condition:\t\t%s' % self.goal_condition,
+                indent=indent, num_indents=num_indents,
+                new_line_start=new_line_start, new_line_end=new_line_end,
+                draw_line=draw_line)
 
     def capture_input(self, vis_env, aux_env, action, prior=True, num_indents=0):
 
@@ -1453,7 +1470,6 @@ class AIRIS(object):
                     self.knowledge[model.source_condition_path + 'rel_abs'] = 1
                     vis_change_found = False
                     self.action_plan = []
-                    print ('NOT ABS')
 
             else:
                 vis_change_found = False

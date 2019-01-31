@@ -94,6 +94,7 @@ class Model(object):
         # copy the focus_value position from the source models
         self.focus_pos = copy.deepcopy(model.focus_pos)
         self.focus_value = copy.deepcopy(model.focus_value)
+        self.focus_index = copy.deepcopy(model.focus_index)
 
         # tally of how many of a particular visual subsymbolic input value
         # is in this model. (used to determine focus value)

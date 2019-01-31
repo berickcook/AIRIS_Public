@@ -43,15 +43,14 @@ while True:
     for x in range(len(get_word)):
         character_input[0][x] = ord(get_word[x])
 
-    # This line gives AIRIS the word with a -1 label. AIRIS then tries to predict what the actual label will be
+    # This line gives AIRIS the word with a -1 label (effectively, no label)
+    # AIRIS then tries to predict what the correct label will be
     ai_action, vis_predict, aux_predict = airis.capture_input(character_input, [-1], 'label', True)
 
     if aux_predict:
         print("The AI thinks the label for this word is: ", int(aux_predict[0][2]))
     else:
         print("The AI doesn't yet have knowledge")
-
-    print(aux_predict)
 
     # Get the integer label from the user
     # (Soon you will be able to give it any kind of label, like a string. Working on it...)

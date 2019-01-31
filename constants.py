@@ -54,7 +54,7 @@ MNIST_TESTING_ACCURACY_LOG  = 'mnist_testing_accuracy_log.txt'
 
 # pretty printing constants
 DEBUG_WITH_CONSOLE = False  # print AIRIS's thoughts to console
-DEBUG_WITH_LOGFILE = True  # output AIRIS's thoughts to a file
+DEBUG_WITH_LOGFILE = False  # output AIRIS's thoughts to a file
 DEBUG_LOGFILE_PATH = './debug_log.txt'
 DEFAULT_INDENT = '|  '
 DEFAULT_DRAW_LINE = False
