@@ -25,7 +25,6 @@ class Model(object):
         self.previous_action = None
         self.previous_output = None
 
-        # not sure what this does ................... ??????????????????????????????????
         self.best_condition_dif = None
         self.best_condition_id = None
         self.best_condition_path = None
@@ -184,8 +183,6 @@ class Model(object):
         # aux_env
         # predicted_aux_change
 
-        # verify this is working with the print_model function!!!!!!!!!!!!!!!!!!!!!!
-
         # get the actual prior and predicted posterior for the focus index
         prior_val = self.aux_env[focus_index]
 
@@ -268,7 +265,3 @@ class Model(object):
                 new_line_end=new_line_end, draw_line=draw_line)
             # also print out which part of the knowledge airis is
             # using to make a prediction and plans (uses predictions to make plans)
-
-            # IF YOU WANT TO PRINT MORE STUFF, MAKE SURE TO MOVE:
-            #    new_line_end=new_line_end, draw_line=draw_line)
-            # IN THE CURRENT LAST pprint TO THE NEW LAST pprint!
