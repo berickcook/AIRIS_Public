@@ -1,15 +1,9 @@
-import time
-import os
-import gc
-import re
 import sys
-import shutil
 import copy
 import numpy as np
 import heapq
 import random
 from operator import itemgetter
-# from timeit import default_timer as timer
 from datetime import datetime
 from model import Model
 from other_useful_functions import *
@@ -416,7 +410,6 @@ class AIRIS(object):
                 self.current_model_index = None
                 for i in self.models:
                     del i
-                gc.collect()
 
                 self.current_model_index = self.create_model(-1, num_indents=num_indents + 2)
 
@@ -1819,7 +1812,7 @@ class AIRIS(object):
             for i, prior_val, posterior_val in self.aux_change_list:
 
                 # if there's vis change data, store ALL the data
-                if i != self.aux_change_index or self.vis_change_list:
+                if i != focus_index or self.vis_change_list:
                     aux_ref_data = (i, prior_val, posterior_val)
                     try:
                         self.knowledge[path + 'aux_ref'].append(aux_ref_data)
@@ -1837,7 +1830,7 @@ class AIRIS(object):
 
     def compare_conditions(self, action, output, model_index, num_indents=0):
 
-        # get the best condition ........... ??????????????????????????????????????
+        # get the best condition
         pprint('getting the difference between memory and what we\'re currently looking at',
             num_indents=num_indents + 1, new_line_start=True)
         start_time = datetime.now()

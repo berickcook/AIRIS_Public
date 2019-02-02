@@ -6,9 +6,10 @@ character_input = [[]]
 for x in range(32):
     character_input[0].append(0)
 
-# aux_input is the encoded "label" of the word. It could be anything. Like 0 for noun, 1 for verb, or whatever.
-# -1 is effectively null
-aux_input = [-1]
+# aux_input is the "label" of the word. It could be anything.
+aux_input = []
+for x in range(32):
+    aux_input.append(0)
 
 # A list of actions that the AI can perform. Only one in this case.
 action_space = ['label']
@@ -31,8 +32,10 @@ while True:
     # First reset all inputs to 0
     for x in range(32):
         character_input[0][x] = 0
-    aux_input[0] = -1
+    for x in range(32):
+        aux_input[x] = 0
 
+    # Clear any leftover predictions
     aux_predict = []
 
     # Get a word from the user
@@ -43,27 +46,27 @@ while True:
     for x in range(len(get_word)):
         character_input[0][x] = ord(get_word[x])
 
-    # This line gives AIRIS the word with a -1 label (effectively, no label)
+    # This line gives AIRIS the word with an empty label (all 0's)
     # AIRIS then tries to predict what the correct label will be
-    ai_action, vis_predict, aux_predict = airis.capture_input(character_input, [-1], 'label', True)
+    ai_action, vis_predict, aux_predict = airis.capture_input(character_input, aux_input, 'label', True)
 
     if aux_predict:
-        print("The AI thinks the label for this word is: ", int(aux_predict[0][2]))
+        # Convert the character codes of the predicted label back into characters for display
+        display_prediction = ''
+        for item in aux_predict:
+            display_prediction += chr(item[2])
+
+        print("The AI thinks the label for this word is: ", display_prediction)
     else:
         print("The AI doesn't yet have knowledge")
 
-    # Get the integer label from the user
-    # (Soon you will be able to give it any kind of label, like a string. Working on it...)
-    print("What integer label is this word?")
+    # Get the label from the user
+    print("What is the label for this word?")
     get_label = input()
-    while True:
-        try:
-            int(get_label)
-            aux_input[0] = get_label
-            break
-        except:
-            print('Invalid entry. label must be an integer')
-            get_label = input()
+
+    # Fill in aux_input with the character codes of the given label
+    for x in range(len(get_label)):
+        aux_input[x] = ord(get_label[x])
 
     # This line gives AIRIS the same word but with the correct label
     # It checks to see if its prediction was correct and updates its knowledge accordingly
