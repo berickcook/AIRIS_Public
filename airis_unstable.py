@@ -37,7 +37,8 @@ class AIRIS(object):
             self.condition_id = self.knowledge['last condition id'] + 1
         except:
             self.knowledge = {}
-            self.knowledge['action set'] = set()
+            self.knowledge['action set'] = []
+            self.knowledge['focus set'] = []
             self.condition_id = 0  # id of condition in the knowledge
 
         # list of all models AIRIS has made
@@ -73,6 +74,7 @@ class AIRIS(object):
         # lists of visual and auxiliary changes in the env from prior to posterior
         self.vis_change_list = []
         self.aux_change_list = []
+        self.aux_change_list_prev = []
         self.vis_change_list_prev = []
 
         self.posterior_focus_value = None  #
@@ -242,6 +244,9 @@ class AIRIS(object):
             pprint('size: %s' % sys.getsizeof(self.knowledge),
                 indent=indent, num_indents=num_indents + 1)
 
+            # action/output/focus_value/condition_id
+            # focus_value/condition_id/[data]
+
             if self.knowledge:
                 pprint('Actions:', indent=indent, num_indents=num_indents + 1)
                 for action in self.knowledge['action set']:
@@ -267,56 +272,103 @@ class AIRIS(object):
                                         pprint('Condition IDs:', indent=indent, num_indents=num_indents + 7)
                                         for condition_id in condition_ids:
                                             condition_id = str(condition_id)
-                                            id_path = focus_path + '/' + condition_id
-                                            try:
-                                                # path + '/posterior_val' is used b/c all conditions have one
-                                                id_exists = self.knowledge[id_path + '/posterior_val']
-                                                pprint(condition_id, indent=indent, num_indents=num_indents + 8)
-                                            except:
-                                                continue  # don't search for knowledge of this condition_id if it doesnt exist
-                                            try:
-                                                pprint('rel_abs:        %s' % self.knowledge[id_path + '/rel_abs'], indent=indent, num_indents=num_indents + 9)
-                                            except KeyError:
-                                                pass
-                                            try:
-                                                pprint('posterior_val:        %s' % self.knowledge[id_path + '/posterior_val'], indent=indent, num_indents=num_indents + 9)
-                                            except KeyError:
-                                                pass
-                                            try:
-                                                x, y = self.knowledge[id_path + '/focus_x'], self.knowledge[id_path + '/focus_y']
-                                                pprint('(focus_x, focus_y):   (%s, %s)' % (x, y), indent=indent, num_indents=num_indents + 9)
-                                            except KeyError:
-                                                pass
-                                            try:
-                                                pprint('focus_i:              %s' % self.knowledge[id_path + '/focus_i'], indent=indent, num_indents=num_indents + 9)
-                                            except KeyError:
-                                                pass
-                                            try:
-                                                pprint('aux_ref:              %s' % self.knowledge[id_path + '/aux_ref'], indent=indent, num_indents=num_indents + 9)
-                                            except KeyError:
-                                                pass
-                                            try:
-                                                pprint('aux_data:             %s' % self.knowledge[id_path + '/aux_data'], indent=indent, num_indents=num_indents + 9)
-                                            except KeyError:
-                                                pass
-                                            try:
-                                                pprint('vis_ref:              %s' % self.knowledge[id_path + '/vis_ref'], indent=indent, num_indents=num_indents + 9)
-                                            except KeyError:
-                                                pass
-                                            try:
-                                                print_vis_env(self.knowledge[id_path + '/vis_data'], title='vis_data', indent=indent, num_indents=num_indents + 9)
-                                            except KeyError:
-                                                pass
-                                            try:
-                                                pprint('post_aux_data:             %s' % self.knowledge[id_path + '/post_aux_data'], indent=indent, num_indents=num_indents + 9)
-                                            except KeyError:
-                                                pass
-                                            try:
-                                                print_vis_env(self.knowledge[id_path + '/post_vis_data'], title='post_vis_data', indent=indent, num_indents=num_indents + 9)
-                                            except KeyError:
-                                                pass
                                     except KeyError:
                                         pass
+                            except KeyError:
+                                pass
+                    except KeyError:
+                        pass
+
+                pprint('Focus Values:', indent=indent, num_indents=num_indents + 1)
+                for condition_focus_value in self.knowledge['focus set']:
+                    focus = str(condition_focus_value)
+                    focus_path = focus
+                    try:
+                        condition_ids = self.knowledge[focus_path]
+                        pprint(focus, indent=indent, num_indents=num_indents + 2)
+                        pprint('Condition IDs:', indent=indent, num_indents=num_indents + 3)
+                        for condition_id in condition_ids:
+                            condition_id = str(condition_id)
+                            id_path = focus_path + '/' + condition_id
+                            try:
+                                # path + '/posterior_val' is used b/c all conditions have one
+                                id_exists = self.knowledge[id_path + '/posterior_val']
+                                pprint(condition_id, indent=indent, num_indents=num_indents + 4)
+                            except:
+                                continue  # don't search for knowledge of this condition_id if it doesnt exist
+                            try:
+                                pprint('rel_abs:        %s' % self.knowledge[id_path + '/rel_abs'], indent=indent,
+                                       num_indents=num_indents + 5)
+                            except KeyError:
+                                pass
+                            try:
+                                pprint('posterior_val:        %s' % self.knowledge[id_path + '/posterior_val'], indent=indent,
+                                       num_indents=num_indents + 5)
+                            except KeyError:
+                                pass
+                            try:
+                                x, y = self.knowledge[id_path + '/focus_x'], self.knowledge[id_path + '/focus_y']
+                                pprint('(focus_x, focus_y):   (%s, %s)' % (x, y), indent=indent, num_indents=num_indents + 9)
+                            except KeyError:
+                                pass
+                            try:
+                                pprint('focus_i:              %s' % self.knowledge[id_path + '/focus_i'], indent=indent,
+                                       num_indents=num_indents + 5)
+                            except KeyError:
+                                pass
+                            try:
+                                pprint('action_cause:              %s' % self.knowledge[id_path + '/action_cause'], indent=indent,
+                                       num_indents=num_indents + 5)
+                            except KeyError:
+                                pass
+                            try:
+                                pprint('aux_cause:              %s' % self.knowledge[id_path + '/aux_cause'], indent=indent,
+                                       num_indents=num_indents + 5)
+                            except KeyError:
+                                pass
+                            try:
+                                pprint('aux_prev_cause:              %s' % self.knowledge[id_path + '/aux_prev_cause'], indent=indent,
+                                       num_indents=num_indents + 5)
+                            except KeyError:
+                                pass
+                            try:
+                                pprint('aux_ref:              %s' % self.knowledge[id_path + '/aux_ref'], indent=indent,
+                                       num_indents=num_indents + 5)
+                            except KeyError:
+                                pass
+                            try:
+                                pprint('aux_data:             %s' % self.knowledge[id_path + '/aux_data'], indent=indent,
+                                       num_indents=num_indents + 5)
+                            except KeyError:
+                                pass
+                            try:
+                                pprint('vis_cause:              %s' % self.knowledge[id_path + '/vis_cause'], indent=indent,
+                                       num_indents=num_indents + 5)
+                            except KeyError:
+                                pass
+                            try:
+                                pprint('vis_prev_cause:              %s' % self.knowledge[id_path + '/vis_prev_cause'], indent=indent,
+                                       num_indents=num_indents + 5)
+                            except KeyError:
+                                pass
+                            try:
+                                pprint('vis_ref:              %s' % self.knowledge[id_path + '/vis_ref'], indent=indent,
+                                       num_indents=num_indents + 5)
+                            except KeyError:
+                                pass
+                            try:
+                                print_vis_env(self.knowledge[id_path + '/vis_data'], title='vis_data', indent=indent,
+                                              num_indents=num_indents + 5)
+                            except KeyError:
+                                pass
+                            try:
+                                pprint('post_aux_data:             %s' % self.knowledge[id_path + '/post_aux_data'], indent=indent,
+                                       num_indents=num_indents + 5)
+                            except KeyError:
+                                pass
+                            try:
+                                print_vis_env(self.knowledge[id_path + '/post_vis_data'], title='post_vis_data', indent=indent,
+                                              num_indents=num_indents + 5)
                             except KeyError:
                                 pass
                     except KeyError:
@@ -1321,8 +1373,6 @@ class AIRIS(object):
         aux_prior_found = True
 
         # resetting self.vis_change_list and self.aux_change_list
-        if self.vis_change_list:
-            self.vis_change_list_prev = self.vis_change_list
         self.vis_change_list = []
         self.aux_change_list = []
 
@@ -1596,7 +1646,7 @@ class AIRIS(object):
             (datetime.now() - start_time)),
             num_indents=num_indents, new_line_start=True, draw_line=True)
 
-        return vis_change_found or aux_change_found
+        return vis_change_found or aux_change_found*
 
     def create_condition(self, last_action, last_output, num_indents=0):
 
@@ -1647,16 +1697,6 @@ class AIRIS(object):
                 # want to store that lack of change in the knowledge,
                 # but since there's no change_lists
                 if self.goal_type == 'New Action' and not self.vis_change_list:
-                    '''if self.vis_change_list_prev:
-                        for _, _, prior_val, _ in self.vis_change_list_prev:
-                            if prior_val == least_frequent_val:
-                                condition_focus_value = least_frequent_val
-                                self.vis_change_index = None
-                                self.posterior_focus_value = least_frequent_val
-                                x, y = vis_env_pos[least_frequent_val]
-                                self.goal_type = 'Random'
-                                self.focus_global_set.add(least_frequent_val)
-                                break'''
                     if least_frequent_val in self.focus_global_set:
                         condition_focus_value = least_frequent_val
                         self.vis_change_index = None
@@ -1752,7 +1792,8 @@ class AIRIS(object):
             action = str(action)
             output = str(output)
 
-            self.knowledge['action set'].add(action)
+            if action not in self.knowledge['action set']:
+                self.knowledge['action set'].append(action)
             self.knowledge['last condition id'] = self.condition_id
 
             try:  # AIRIS has knowledge of the action AND output
@@ -1763,6 +1804,7 @@ class AIRIS(object):
                 self.knowledge[action].append(output)
 
             path = action + '/' + output
+            change_condition_id = str(self.condition_id)
             A = str(A)
             condition_focus_value = str(condition_focus_value)
             try:
@@ -1772,8 +1814,20 @@ class AIRIS(object):
             except ValueError:
                 self.knowledge[path].append(A + condition_focus_value)
 
+            path += A + condition_focus_value
+            try:
+                self.knowledge[path].index(change_condition_id)
+            except KeyError:
+                self.knowledge[path] = [change_condition_id]
+            except ValueError:
+                self.knowledge[path].append(change_condition_id)
+
+            # action/output/focus_value/condition_id
+            # focus_value/condition_id/[data]
             path = A + condition_focus_value
-            change_condition_id = str(self.condition_id)
+            if path not in self.knowledge['focus set']:
+                self.knowledge[path].append(path)
+
             try:
                 self.knowledge[path].index(change_condition_id)
             except KeyError:
@@ -1797,6 +1851,15 @@ class AIRIS(object):
             self.knowledge[path + 'post_aux_data'] = copy.deepcopy(self.posterior_aux_env)
 
             self.knowledge[path + 'rel_abs'] = 0
+
+            # /action_cause
+            try:
+                action_cause_temp = ""
+                if self.knowledge[path + 'action_cause'] == action:
+                    action_cause_temp = action
+                self.knowledge[path + 'action_cause'] = action_cause_temp
+            except KeyError:
+                self.knowledge[path + 'action_cause'] = action
 
             # /vis_ref
             for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list):
@@ -1831,6 +1894,26 @@ class AIRIS(object):
                         except KeyError:
                             self.knowledge[path + 'vis_cause'] = [vis_ref_data]
 
+            # /vis_prev_cause
+            try:
+                vis_prev_cause_temp = []
+                for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list_prev):
+                    dx = x - focus_x
+                    dy = y - focus_y
+                    vis_ref_data = (dx, dy, prior_val, posterior_val)
+                    if vis_ref_data in self.knowledge[path + 'vis_prev_cause']:
+                        vis_prev_cause_temp.append(vis_ref_data)
+                self.knowledge[path + 'vis_prev_cause'] = vis_prev_cause_temp
+            except KeyError:
+                for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list_prev):
+                    dx = x - focus_x
+                    dy = y - focus_y
+                    vis_ref_data = (dx, dy, prior_val, posterior_val)
+                    try:
+                        self.knowledge[path + 'vis_prev_cause'].append(vis_ref_data)
+                    except KeyError:
+                        self.knowledge[path + 'vis_prev_cause'] = [vis_ref_data]
+                
             # /aux_ref
             for i, prior_val, posterior_val in self.aux_change_list:
                 # if there's vis change data, store ALL the data
@@ -1861,6 +1944,22 @@ class AIRIS(object):
                         except KeyError:
                             self.knowledge[path + 'aux_cause'] = [aux_ref_data]
 
+            # /aux_prev_cause
+            try:
+                aux_prev_cause_temp = []
+                for i, prior_val, posterior_val in self.aux_change_list_prev:
+                    aux_ref_data = (i, prior_val, posterior_val)
+                    if aux_ref_data in self.knowledge[path + 'aux_prev_cause']:
+                        aux_prev_cause_temp.append(aux_ref_data)
+                self.knowledge[path + 'aux_prev_cause'] = aux_prev_cause_temp
+            except KeyError:
+                for i, prior_val, posterior_val in self.aux_change_list_prev:
+                    aux_ref_data = (i, prior_val, posterior_val)
+                    try:
+                        self.knowledge[path + 'aux_prev_cause'].append(aux_ref_data)
+                    except KeyError:
+                        self.knowledge[path + 'aux_prev_cause'] = [aux_ref_data]
+
             self.save_knowledge()
 
         else:
@@ -1872,6 +1971,8 @@ class AIRIS(object):
         pprint('update complete. duration: %s' % (datetime.now() - start_time),
             num_indents=num_indents, new_line_start=True, draw_line=True)
 
+        self.vis_change_list_prev = self.vis_change_list
+        self.aux_change_list_prev = self.aux_change_list
 
     def compare_conditions(self, action, output, model_index, num_indents=0):
 
