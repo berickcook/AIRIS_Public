@@ -43,7 +43,7 @@ Number recognition using the MNIST hand-written character dataset
 
 ## basic_example.py
 
-This is intended to be a simple usage example. It will ask for a word, then ask what the label of that word is. It will try to predict what the label is for new words.
+This is intended to be a simple usage example. It will ask for a word, then ask what the label of that word is. It will try to predict what the label is for new words. Both the word(s) and the label can be anything. In the example below, I used "Name" and "Location" for labels, and some random names and locations I came up with.
 
 ```
 Enter a word:
