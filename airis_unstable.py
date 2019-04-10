@@ -43,7 +43,7 @@ class AIRIS(object):
 
         # list of all models AIRIS has made
         self.current_model_index = None
-        self.models = [0]
+        self.models = []
 
         # set of all unique visual and non-visual values ever seen since birth
         self.vis_global_set = set()
@@ -1273,7 +1273,7 @@ class AIRIS(object):
 
             if model.focus_pos:
                 fx, fy = copy.deepcopy(model.focus_pos)
-            for dx, dy, prior_val, posterior_val in predict_vis_ref:
+            for dx, dy, prior_val, posterior_val, change_condition_id in predict_vis_ref:
                 x, y = fx + dx, fy + dy
                 if 0 <= x < len(self.prior_vis_env) and 0 <= y < len(self.prior_vis_env[0]):
                     model.update_vis_value(posterior_val, (x, y), focus_value=model.focus_value)
@@ -1290,7 +1290,7 @@ class AIRIS(object):
             except KeyError:
                 predict_aux_ref = []
 
-            for i, prior_val, posterior_val in predict_aux_ref:
+            for i, _, prior_val, posterior_val, change_condition_id in predict_aux_ref:
                 model.update_aux_value(posterior_val, i)
 
             # Update focus value if previous models focus value no longer exists
@@ -1458,7 +1458,7 @@ class AIRIS(object):
 
                         pprint('checking ABS 5 '+str(cfx)+'/'+str(cfy), num_indents=num_indents + 1)
 
-                        for cdx, cdy, prior_val, posterior_val in predict_vis_ref:
+                        for cdx, cdy, prior_val, posterior_val, change_condition_id in predict_vis_ref:
                             x, y = cfx + cdx, cfy + cdy
                             if 0 <= x < len(self.prior_vis_env) and 0 <= y < len(self.prior_vis_env[0]):
                                 check_model.update_vis_value(posterior_val, (x, y), focus_value=check_model.focus_value)
@@ -1471,7 +1471,7 @@ class AIRIS(object):
 
                         pprint('checking ABS 6 '+str(predict_aux_ref), num_indents=num_indents + 1)
 
-                        for i, prior_val, posterior_val in predict_aux_ref:
+                        for i, _, prior_val, posterior_val, change_condition_id in predict_aux_ref:
                             check_model.update_aux_value(posterior_val, i)
 
                         vis_check_array = array_dif(
@@ -1502,12 +1502,12 @@ class AIRIS(object):
                     # iterate over the changes in the visual environment
                     pprint('appending differences to self.vis_change_list:',
                         num_indents=num_indents + 1, new_line_start=True)
-                    pprint('key: [(x, y, prior_val, actual_posterior_val), ...]',
+                    pprint('key: [(x, y, prior_val, actual_posterior_val, change_condition_id), ...]',
                         num_indents=num_indents + 1)
                     for x, y in zip(change_x, change_y):
                         prior_val = self.prior_vis_env[x][y]
                         posterior_val = self.posterior_vis_env[x][y]
-                        change_data = (x, y, prior_val, posterior_val)
+                        change_data = (x, y, prior_val, posterior_val, -1)
                         self.vis_change_list.append(copy.deepcopy(change_data))
                 else:
                     pprint ('NOT ABS', num_indents=num_indents + 1, new_line_start=True)
@@ -1540,7 +1540,7 @@ class AIRIS(object):
 
         pprint('appending differences to self.aux_change_list',
             num_indents=num_indents + 1, new_line_start=True)
-        pprint('key: [(index, prior_val, actual_posterior_val), ...]',
+        pprint('key: [(index, _, prior_val, actual_posterior_val, change_condition_id), ...]',
             num_indents=num_indents + 1)
         pprint('aux_change_list = '+str(aux_change_index),
             num_indents=num_indents + 1)
@@ -1573,7 +1573,7 @@ class AIRIS(object):
                 for i in aux_change_index:
                     prior_val = self.prior_aux_env[i]
                     posterior_val = self.posterior_aux_env[i]
-                    change_data = (i, prior_val, posterior_val)
+                    change_data = (i, -1, prior_val, posterior_val, -1)
                     self.aux_change_index = i
                     self.aux_change_list.append(copy.deepcopy(change_data))
 
@@ -1589,7 +1589,7 @@ class AIRIS(object):
             for i in aux_prior_index:
                 prior_val = self.prior_aux_env[i]
                 posterior_val = self.posterior_aux_env[i]
-                change_data = (i, prior_val, posterior_val)
+                change_data = (i, -1, prior_val, posterior_val, -1)
                 self.aux_change_index = i
                 self.aux_change_list.append(copy.deepcopy(change_data))
 
@@ -1600,31 +1600,31 @@ class AIRIS(object):
         if aux_change_found and not abs_source:
             pprint('appending prediction to self.aux_change_list:',
                 num_indents=num_indents + 1, new_line_start=True)
-            for i, prior_val, posterior_val in model.predicted_aux_change:
+            for i, prior_val, posterior_val, change_condition_id in model.predicted_aux_change:
                 if not [index for index in self.aux_change_list if index[0] == i]:
-                    self.aux_change_list.append((i, prior_val, posterior_val))
+                    self.aux_change_list.append((i, -1, prior_val, posterior_val, change_condition_id))
 
-            for x, y, prior_val, _ in model.predicted_vis_change:
+            for x, y, prior_val, _, change_condition_id in model.predicted_vis_change:
                 if not [pos for pos in self.vis_change_list if pos[0] == x and pos[1] == y]:
                     prior_val = self.prior_vis_env[x][y]
                     posterior_val = self.posterior_vis_env[x][y]
-                    change_data = (x, y, prior_val, posterior_val)
+                    change_data = (x, y, prior_val, posterior_val, -1)
                     self.vis_change_list.append(copy.deepcopy(change_data))
 
         # include real values of all predicted changes if there's an unpredicted change but no difference in the env
         if vis_change_found and vis_check_found and not abs_source:
             pprint('appending prediction to self.vis_change_list:',
                 num_indents=num_indents + 1, new_line_start=True)
-            for x, y, prior_val, _ in model.predicted_vis_change:
+            for x, y, prior_val, _, change_condition_id in model.predicted_vis_change:
                 if not [pos for pos in self.vis_change_list if pos[0] == x and pos[1] == y]:
                     prior_val = self.prior_vis_env[x][y]
                     posterior_val = self.posterior_vis_env[x][y]
-                    change_data = (x, y, prior_val, posterior_val)
+                    change_data = (x, y, prior_val, posterior_val, -1)
                     self.vis_change_list.append(copy.deepcopy(change_data))
 
-            for i, prior_val, posterior_val in model.predicted_aux_change:
+            for i, prior_val, posterior_val, change_condition_id in model.predicted_aux_change:
                 if not [index for index in self.aux_change_list if index[0] == i]:
-                    self.aux_change_list.append((i, prior_val, posterior_val))
+                    self.aux_change_list.append((i, -1, prior_val, posterior_val, change_condition_id))
 
         if vis_abs_found or aux_abs_found:
             try:
@@ -1710,13 +1710,13 @@ class AIRIS(object):
                 #    condition_focus_value
                 #    self.vis_change_data
                 #    self.posterior_focus_value
-                for change_index, (x, y, prior_val, posterior_val) \
+                for change_index, (x, y, prior_val, posterior_val, change_condition_id) \
                 in enumerate(self.vis_change_list):
                     if prior_val == least_frequent_val and prior_val in self.focus_global_set:
                         condition_focus_value = prior_val
                         self.vis_change_index = change_index
                         self.posterior_focus_value = posterior_val
-                        for _, _, not_focus, _ in self.vis_change_list:
+                        for _, _, not_focus, _, _ in self.vis_change_list:
                             if not_focus != prior_val:
                                 self.not_focus_global_set.add(not_focus)
                         break
@@ -1729,14 +1729,14 @@ class AIRIS(object):
                     _, least_frequent_val = heapq.heappop(no_focus_vis_env_heap)
 
                     if self.vis_change_list:
-                        for change_index, (x, y, prior_val, posterior_val) \
+                        for change_index, (x, y, prior_val, posterior_val, change_condition_id) \
                         in enumerate(self.vis_change_list):
                             if prior_val == least_frequent_val and prior_val not in self.not_focus_global_set:
                                 condition_focus_value = prior_val
                                 self.vis_change_index = change_index
                                 self.posterior_focus_value = posterior_val
                                 self.focus_global_set.add(least_frequent_val)
-                                for _, _, not_focus, _ in self.vis_change_list:
+                                for _, _, not_focus, _, _ in self.vis_change_list:
                                     if not_focus != prior_val:
                                         self.not_focus_global_set.add(not_focus)
                                 break
@@ -1763,7 +1763,7 @@ class AIRIS(object):
         # the visual prediction was correct
         if self.aux_change_list and not self.vis_change_list:
 
-            focus_index, condition_focus_value, self.posterior_focus_value = \
+            focus_index, _, condition_focus_value, self.posterior_focus_value, change_condition_id = \
             self.aux_change_list[0]
 
             pprint('self.aux_change_list     %s' % self.aux_change_list, num_indents=num_indents + 2)
@@ -1784,27 +1784,40 @@ class AIRIS(object):
 
         start_time = datetime.now()
 
-        if condition_focus_value != None:
+        pprint('Updating Knowledge:', num_indents=num_indents, new_line_start=True)
 
-            pprint('Updating Knowledge:',
-                num_indents=num_indents, new_line_start=True)
+        action = str(action)
+        output = str(output)
 
-            action = str(action)
-            output = str(output)
+        if action not in self.knowledge['action set']:
+            self.knowledge['action set'].append(action)
 
-            if action not in self.knowledge['action set']:
-                self.knowledge['action set'].append(action)
-            self.knowledge['last condition id'] = self.condition_id
+        try:  # AIRIS has knowledge of the action AND output
+            self.knowledge[action].index(output)
+        except KeyError:  # AIRIS has no knowledge of the action
+            self.knowledge[action] = [output]
+        except ValueError:  # AIRIS has knowledge of the action, but not of the output
+            self.knowledge[action].append(output)
 
-            try:  # AIRIS has knowledge of the action AND output
-                self.knowledge[action].index(output)
-            except KeyError:  # AIRIS has no knowledge of the action
-                self.knowledge[action] = [output]
-            except ValueError:  # AIRIS has knowledge of the action, but not of the output
-                self.knowledge[action].append(output)
+        AOpath = action + '/' + output
+        if self.vis_change_list:
+            change_list = self.vis_change_list
+        elif self.aux_change_list:
+            change_list = self.aux_change_list
+        else:
+            change_list = []
 
-            path = action + '/' + output
-            change_condition_id = str(self.condition_id)
+        for i, (x, y, prior_val, posterior_val, change_condition_id) in enumerate(change_list):
+            condition_focus_value = prior_val
+
+            if change_list is self.aux_change_list:
+                index = x
+
+            path = AOpath
+            if change_condition_id == -1:
+                change_condition_id = self.knowledge['last condition id']
+                self.knowledge['last condition id'] += 1
+
             A = str(A)
             condition_focus_value = str(condition_focus_value)
             try:
@@ -1826,7 +1839,7 @@ class AIRIS(object):
             # focus_value/condition_id/[data]
             path = A + condition_focus_value
             if path not in self.knowledge['focus set']:
-                self.knowledge[path].append(path)
+                self.knowledge['focus set'].append(path)
 
             try:
                 self.knowledge[path].index(change_condition_id)
@@ -1836,13 +1849,13 @@ class AIRIS(object):
                 self.knowledge[path].append(change_condition_id)
 
             path += '/' + change_condition_id + '/'
-            self.knowledge[path + 'posterior_val'] = self.posterior_focus_value
+            self.knowledge[path + 'posterior_val'] = posterior_val
 
             if A == '':
-                self.knowledge[path + 'focus_x'] = focus_x
-                self.knowledge[path + 'focus_y'] = focus_y
+                self.knowledge[path + 'focus_x'] = x
+                self.knowledge[path + 'focus_y'] = y
             else:
-                self.knowledge[path + 'focus_i'] = focus_index
+                self.knowledge[path + 'focus_i'] = index
 
             self.knowledge[path + 'vis_data'] = copy.deepcopy(self.prior_vis_env)
             self.knowledge[path + 'aux_data'] = copy.deepcopy(self.prior_aux_env)
@@ -1862,11 +1875,11 @@ class AIRIS(object):
                 self.knowledge[path + 'action_cause'] = action
 
             # /vis_ref
-            for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list):
-                if i != self.vis_change_index:
-                    dx = x - focus_x
-                    dy = y - focus_y
-                    vis_ref_data = (dx, dy, prior_val, posterior_val)
+            for ref_i, (ref_x, ref_y, ref_prior_val, ref_posterior_val, ref_change_condition_id) in enumerate(self.vis_change_list):
+                if ref_i != self.vis_change_index:
+                    dx = ref_x - focus_x
+                    dy = ref_y - focus_y
+                    vis_ref_data = (dx, dy, ref_prior_val, ref_posterior_val, ref_change_condition_id)
                     try:
                         self.knowledge[path + 'vis_ref'].append(vis_ref_data)
                     except KeyError:
@@ -1875,20 +1888,20 @@ class AIRIS(object):
             # /vis_cause
             try:
                 vis_cause_temp = []
-                for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list):
-                    if i != self.vis_change_index:
-                        dx = x - focus_x
-                        dy = y - focus_y
-                        vis_ref_data = (dx, dy, prior_val, posterior_val)
+                for cause_i, (cause_x, cause_y, cause_prior_val, cause_posterior_val, cause_change_condition_id) in enumerate(self.vis_change_list):
+                    if cause_i != self.vis_change_index:
+                        dx = cause_x - focus_x
+                        dy = cause_y - focus_y
+                        vis_ref_data = (dx, dy, cause_prior_val, cause_posterior_val, cause_change_condition_id)
                         if vis_ref_data in self.knowledge[path + 'vis_cause']:
                             vis_cause_temp.append(vis_ref_data)
                 self.knowledge[path + 'vis_cause'] = vis_cause_temp
             except KeyError:
-                for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list):
-                    if i != self.vis_change_index:
-                        dx = x - focus_x
-                        dy = y - focus_y
-                        vis_ref_data = (dx, dy, prior_val, posterior_val)
+                for cause_i, (cause_x, cause_y, cause_prior_val, cause_posterior_val, cause_change_condition_id) in enumerate(self.vis_change_list):
+                    if cause_i != self.vis_change_index:
+                        dx = cause_x - focus_x
+                        dy = cause_y - focus_y
+                        vis_ref_data = (dx, dy, cause_prior_val, cause_posterior_val, cause_change_condition_id)
                         try:
                             self.knowledge[path + 'vis_cause'].append(vis_ref_data)
                         except KeyError:
@@ -1897,28 +1910,28 @@ class AIRIS(object):
             # /vis_prev_cause
             try:
                 vis_prev_cause_temp = []
-                for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list_prev):
-                    dx = x - focus_x
-                    dy = y - focus_y
-                    vis_ref_data = (dx, dy, prior_val, posterior_val)
+                for prev_cause_i, (prev_cause_x, prev_cause_y, prev_cause_prior_val, prev_cause_posterior_val, prev_cause_change_condition_id) in enumerate(self.vis_change_list_prev):
+                    dx = prev_cause_x - focus_x
+                    dy = prev_cause_y - focus_y
+                    vis_ref_data = (dx, dy, prev_cause_prior_val, prev_cause_posterior_val, prev_cause_change_condition_id)
                     if vis_ref_data in self.knowledge[path + 'vis_prev_cause']:
                         vis_prev_cause_temp.append(vis_ref_data)
                 self.knowledge[path + 'vis_prev_cause'] = vis_prev_cause_temp
             except KeyError:
-                for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list_prev):
-                    dx = x - focus_x
-                    dy = y - focus_y
-                    vis_ref_data = (dx, dy, prior_val, posterior_val)
+                for prev_cause_i, (prev_cause_x, prev_cause_y, prev_cause_prior_val, prev_cause_posterior_val, prev_cause_change_condition_id) in enumerate(self.vis_change_list_prev):
+                    dx = prev_cause_x - focus_x
+                    dy = prev_cause_y - focus_y
+                    vis_ref_data = (dx, dy, prev_cause_prior_val, prev_cause_posterior_val, prev_cause_change_condition_id)
                     try:
                         self.knowledge[path + 'vis_prev_cause'].append(vis_ref_data)
                     except KeyError:
                         self.knowledge[path + 'vis_prev_cause'] = [vis_ref_data]
                 
             # /aux_ref
-            for i, prior_val, posterior_val in self.aux_change_list:
+            for ref_i, _, ref_prior_val, ref_posterior_val, ref_change_condition_id in self.aux_change_list:
                 # if there's vis change data, store ALL the data
-                if i != focus_index or self.vis_change_list:
-                    aux_ref_data = (i, prior_val, posterior_val)
+                if ref_i != focus_index or self.vis_change_list:
+                    aux_ref_data = (ref_i, ref_prior_val, ref_posterior_val, ref_change_condition_id)
                     try:
                         self.knowledge[path + 'aux_ref'].append(aux_ref_data)
                     except KeyError:
@@ -1927,18 +1940,18 @@ class AIRIS(object):
             # /aux_cause
             try:
                 aux_cause_temp = []
-                for i, prior_val, posterior_val in self.aux_change_list:
+                for cause_i, _, cause_prior_val, cause_posterior_val, cause_change_condition_id in self.aux_change_list:
                     # if there's vis change data, store ALL the data
-                    if i != focus_index or self.vis_change_list:
-                        aux_ref_data = (i, prior_val, posterior_val)
+                    if cause_i != focus_index or self.vis_change_list:
+                        aux_ref_data = (cause_i, cause_prior_val, cause_posterior_val, cause_change_condition_id)
                         if aux_ref_data in self.knowledge[path + 'aux_cause']:
                             aux_cause_temp.append(aux_ref_data)
                 self.knowledge[path + 'aux_cause'] = aux_cause_temp
             except KeyError:
-                for i, prior_val, posterior_val in self.aux_change_list:
+                for cause_i, _, cause_prior_val, cause_posterior_val, cause_change_condition_id in self.aux_change_list:
                     # if there's vis change data, store ALL the data
-                    if i != focus_index or self.vis_change_list:
-                        aux_ref_data = (i, prior_val, posterior_val)
+                    if cause_i != focus_index or self.vis_change_list:
+                        aux_ref_data = (cause_i, cause_prior_val, cause_posterior_val, cause_change_condition_id)
                         try:
                             self.knowledge[path + 'aux_cause'].append(aux_ref_data)
                         except KeyError:
@@ -1947,14 +1960,14 @@ class AIRIS(object):
             # /aux_prev_cause
             try:
                 aux_prev_cause_temp = []
-                for i, prior_val, posterior_val in self.aux_change_list_prev:
-                    aux_ref_data = (i, prior_val, posterior_val)
+                for prev_cause_i, _, prev_cause_prior_val, prev_cause_posterior_val, prev_cause_change_condition_id in self.aux_change_list_prev:
+                    aux_ref_data = (prev_cause_i, prev_cause_prior_val, prev_cause_posterior_val, prev_cause_change_condition_id)
                     if aux_ref_data in self.knowledge[path + 'aux_prev_cause']:
                         aux_prev_cause_temp.append(aux_ref_data)
                 self.knowledge[path + 'aux_prev_cause'] = aux_prev_cause_temp
             except KeyError:
-                for i, prior_val, posterior_val in self.aux_change_list_prev:
-                    aux_ref_data = (i, prior_val, posterior_val)
+                for prev_cause_i, _, prev_cause_prior_val, prev_cause_posterior_val, prev_cause_change_condition_id in self.aux_change_list_prev:
+                    aux_ref_data = (prev_cause_i, prev_cause_prior_val, prev_cause_posterior_val, prev_cause_change_condition_id)
                     try:
                         self.knowledge[path + 'aux_prev_cause'].append(aux_ref_data)
                     except KeyError:
