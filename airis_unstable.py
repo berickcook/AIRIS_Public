@@ -2005,7 +2005,7 @@ class AIRIS(object):
         self.vis_change_list_prev = self.vis_change_list
         self.aux_change_list_prev = self.aux_change_list
 
-    def compare_conditions(self, action, output, model_index, focus_value, num_indents=0):
+    def compare_conditions(self, action, output, model_index, focus_value, condition_id, num_indents=0):
 
         # get the best condition
         pprint('getting the difference between memory and what we\'re currently looking at',
@@ -2016,9 +2016,7 @@ class AIRIS(object):
         model_heap = copy.deepcopy(model.vis_count_heap)
         vis_model = copy.deepcopy(model.vis_env)
         aux_model = copy.deepcopy(model.aux_env)
-        condition_heap = []
-        condition_count = {}
-        condition_count_heap = []
+        # return_data[best_condition_dif, focus_value, condition_id, (posx, posy), path]
         return_data = []
         pprint(str(action), num_indents=num_indents + 1)
         pprint('model_index = %s' % model_index, num_indents=num_indents + 1)
@@ -2026,18 +2024,11 @@ class AIRIS(object):
         path = str(action) + '/' + str(output)
         pprint('path = ' + path, num_indents=num_indents + 1)
         pprint('focus_value = ' + str(focus_value), num_indents=num_indents + 1)
-        condition_path = path + '/' + str(focus_value)
+        data_path = str(focus_value) + '/' + str(condition_id) + '/'
 
-        try:
-            for focus_x, focus_y in model.vis_count_pos[focus_value]:
-                try:
-                    condition_list = self.knowledge[condition_path]
-                except KeyError:
-                    condition_list = []
-
-                for condition_id in condition_list:
-                    # focus_value/condition_id/[data]
-                    data_path = str(focus_value) + '/' + str(condition_id) + '/'
+        if focus_value[0] != 'A':
+            try:
+                for focus_x, focus_y in model.vis_count_pos[focus_value]:
                     condition_dif = 0
 
                     try:
@@ -2046,39 +2037,28 @@ class AIRIS(object):
                             if 0 <= x < len(vis_model) and 0 <= y < len(vis_model[0]):
                                 if vis_model[x][y] != prior_val:
                                     condition_dif += abs(vis_model[x][y] - prior_val)
-
-                        try:
-                            condition_count[focus_value] += 1
-                        except KeyError:
-                            condition_count[focus_value] = 1
                     except KeyError:
-                        pass
+                        print ('No vis_cause data for ', condition_id)
 
                     try:
                         for i, _, prior_val, _, _ in self.knowledge[data_path + 'aux_cause']:
                             if i < len(aux_model):
                                 if aux_model[i] != prior_val:
                                     condition_dif += abs(aux_model[i] - prior_val)
-
-                        try:
-                            condition_count[focus_value] += 1
-                        except KeyError:
-                            condition_count[focus_value] = 1
                     except KeyError:
-                        pass
+                        print ('No aux_cause data for ', condition_id)
 
-                    heapq.heappush(condition_heap, (condition_dif, focus_value, condition_id, focus_x, focus_y, data_path))
+                    return_data.append([condition_dif, focus_value, condition_id, (focus_x, focus_y), data_path])
 
-                    try:
-                        if condition_count[focus_value]:
-                            heapq.heappush(condition_count_heap, (condition_dif, focus_value, condition_id, focus_x, focus_y, data_path))
-                    except KeyError:
-                        print ("I'm reasonably sure this should not happen. Look into it.")
-                        interrupt = input()
+            except KeyError:
+                return_data = [[None, focus_value, condition_id, (None, None), data_path]]
+        else:
 
-        except KeyError:
-            pass
-
+        '''
+        
+        condition_heap = []
+        condition_count = {}
+        condition_count_heap = []
         if condition_count_heap:
             condition_count_max_value = max(condition_count, key=lambda key: condition_count[key])
             condition_count_heap = [i for i in condition_count_heap if i[1] == condition_count_max_value]
@@ -2198,6 +2178,8 @@ class AIRIS(object):
         pprint('model.best_condition_path = ' + str(model.best_condition_path), num_indents=num_indents + 1)
         pprint('difference found. duration: %s' % (datetime.now() - start_time),
             num_indents=1, new_line_start=True, draw_line=True)
+        '''
+        return return_data
 
     def save_knowledge(self):
         # Save
