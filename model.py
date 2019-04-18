@@ -25,13 +25,12 @@ class Model(object):
         self.previous_action = None
         self.previous_output = None
 
+        self.best_conditions = []
         self.best_condition_dif = None
         self.best_condition_id = None
         self.best_condition_path = None
         self.source_condition_path = None
         self.depth = 0
-
-        self.best_condition_list = None
 
         # same as vis_change and aux_change (not in model)
         self.predicted_vis_change = []  # [(x, y, prior_val, posterior_val)... ]
