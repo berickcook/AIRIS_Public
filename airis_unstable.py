@@ -2037,8 +2037,17 @@ class AIRIS(object):
                             if 0 <= x < len(vis_model) and 0 <= y < len(vis_model[0]):
                                 if vis_model[x][y] != prior_val:
                                     condition_dif += abs(vis_model[x][y] - prior_val)
+
+                        if not self.knowledge[data_path + 'vis_cause']:
+                            condition_data_array = self.knowledge[data_path + 'vis_data']
+                            condition_aux_data_array = self.knowledge[data_path + 'aux_data']
+
+                            condition_dif = np.sum(array_dif(vis_model, condition_data_array))
+                            condition_dif += np.sum(array_dif(aux_model, condition_aux_data_array))
+
                     except KeyError:
-                        print ('No vis_cause data for ', condition_id)
+                        print ('Error: Missing vis_cause data for ', condition_id)
+                        raise Exception
 
                     try:
                         for i, _, prior_val, _, _ in self.knowledge[data_path + 'aux_cause']:
@@ -2046,163 +2055,51 @@ class AIRIS(object):
                                 if aux_model[i] != prior_val:
                                     condition_dif += abs(aux_model[i] - prior_val)
                     except KeyError:
-                        print ('No aux_cause data for ', condition_id)
+                        print ('Error: Missing aux_cause data for ', condition_id)
+                        raise Exception
 
                     return_data.append([condition_dif, focus_value, condition_id, (focus_x, focus_y), data_path])
 
             except KeyError:
                 return_data = [[None, focus_value, condition_id, (None, None), data_path]]
+
         else:
             try:
                 for aux_index, aux_value in enumerate(model.aux_env):
-                    model.focus_value = 'A' + str(aux_value)
+                    if focus_value == 'A' + str(aux_value):
+                        pprint('Aux focus_value = ' + str(focus_value), num_indents=num_indents + 1)
+                        condition_dif = 0
 
-                    if model.focus_value in focus_list:
-                        pprint('Aux focus_value = ' + str(model.focus_value), num_indents=num_indents + 1)
-                        condition_path = str(action) + '/' + str(output) + '/' + model.focus_value
                         try:
-                            condition_list = self.knowledge[condition_path]
-                        except KeyError:
-                            condition_list = []
+                            for _, _, prior_val, _, cond in self.knowledge[data_path + 'vis_cause']:
+                                if cond not in model.best_conditions:
+                                    condition_dif += 1
 
-                        for condition_id in condition_list:
-                            data_path = condition_path + '/' + str(condition_id) + '/'
-                            if aux_index == self.knowledge[data_path + 'focus_i']:
+                            if not self.knowledge[data_path + 'vis_cause']:
                                 condition_data_array = self.knowledge[data_path + 'vis_data']
                                 condition_aux_data_array = self.knowledge[data_path + 'aux_data']
 
                                 condition_dif = np.sum(array_dif(vis_model, condition_data_array))
                                 condition_dif += np.sum(array_dif(aux_model, condition_aux_data_array))
 
-                                return_data.append([condition_dif, model.focus_value, (aux_index, None), condition_id, data_path])
+                        except KeyError:
+                            print('Error: Missing vis_cause data for ', condition_id)
+                            raise Exception
+
+                        try:
+                            for i, _, prior_val, _, _ in self.knowledge[data_path + 'aux_cause']:
+                                if i < len(aux_model):
+                                    if aux_model[i] != prior_val:
+                                        condition_dif += abs(aux_model[i] - prior_val)
+                        except KeyError:
+                            print('Error: Missing aux_cause data for ', condition_id)
+                            raise Exception
+
+                        return_data.append([condition_dif, focus_value, (aux_index, None), condition_id, data_path])
 
             except KeyError:
                 return_data = [[None, focus_value, condition_id, (None, None), data_path]]
-        '''
-        
-        condition_heap = []
-        condition_count = {}
-        condition_count_heap = []
-        if condition_count_heap:
-            condition_count_max_value = max(condition_count, key=lambda key: condition_count[key])
-            condition_count_heap = [i for i in condition_count_heap if i[1] == condition_count_max_value]
-            heapq.heapify(condition_count_heap)
-            pprint('condition heap post-prune:', num_indents=num_indents + 1)
-            pprint(str(condition_count_heap), num_indents=num_indents + 1)
-            # best_condition_dif, best_condition_id, focus_pos, best_condition_path
-            return_data.append((condition_count_heap[0][0], condition_count_heap[0][2], condition_count_heap[0][3], condition_count_heap[0][4], condition_count_heap[0][5]))
-            heapq.heappop(condition_count_heap)
-            pprint('best_condition_dif: ' + str(condition_count_heap[0][0]), num_indents=num_indents + 1)
-            pprint('focus_value: ' + str(condition_count_heap[0][1]), num_indents=num_indents + 1)
-            pprint('best_condition_id: ' + str(condition_count_heap[0][2]), num_indents=num_indents + 1)
-            pprint('updated model focus_pos: ' + str((condition_count_heap[0][3], condition_count_heap[0][4])), num_indents=num_indents + 1)
-            pprint('best_condition_path: ' + str(condition_heap[0][5]), num_indents=num_indents + 1)
 
-            if condition_count_heap:
-                while model.best_condition_dif == condition_count_heap[0][0]:
-
-                    if model.best_condition_id != condition_count_heap[0][2]:
-
-                        competing_dif = [0, 0]
-                        competing_data_path = [model.best_condition_path, condition_count_heap[0][5]]
-                        competing_focus_pos = [model.focus_pos, (condition_count_heap[0][3], condition_count_heap[0][4])]
-
-                        for i, path in enumerate(competing_data_path):
-                            if i == 0:
-                                j = 1
-                            else:
-                                j = 0
-
-                            pprint('i / j: ' + str(i) + '/' + str(j), num_indents=num_indents + 1)
-
-                            vis_model = self.knowledge[path + 'vis_data']
-                            aux_model = self.knowledge[path + 'aux_data']
-                            focus_x, focus_y = competing_focus_pos[i]
-
-                            try:
-                                for dx, dy, prior_val, _, _ in self.knowledge[competing_data_path[j] + 'vis_cause']:
-                                    x, y = focus_x + dx, focus_y + dy
-                                    if 0 <= x < len(vis_model) and 0 <= y < len(vis_model[0]):
-                                        if vis_model[x][y] != prior_val:
-                                            competing_dif[i] += abs(vis_model[x][y] - prior_val)
-                                            pprint('competing_vis_dif', num_indents=num_indents + 1)
-                                    else:
-                                        competing_dif[i] += prior_val
-                                        pprint('competing_vis_dif', num_indents=num_indents + 1)
-                            except KeyError:
-                                pass
-
-                            try:
-                                for ind, _, prior_val, _, _ in self.knowledge[competing_data_path[j] + 'aux_cause']:
-                                    if ind < len(aux_model):
-                                        if aux_model[ind] != prior_val:
-                                            competing_dif[i] += abs(aux_model[ind] - prior_val)
-                                            pprint('competing_aux_dif ' + str(i), num_indents=num_indents + 1)
-                                    else:
-                                        competing_dif[i] += prior_val
-                                        pprint('competing_aux_dif' + str(i), num_indents=num_indents + 1)
-                            except KeyError:
-                                pass
-
-                        pprint('competing_dif: ' + str(competing_dif), num_indents=num_indents + 1)
-                        pprint('competing_data_path: ' + str(competing_data_path), num_indents=num_indents + 1)
-
-                        if competing_dif[1] < competing_dif[0]:
-                            model.best_condition_dif = condition_count_heap[0][0]
-                            model.best_condition_id = condition_count_heap[0][2]
-                            model.focus_pos = (condition_count_heap[0][3], condition_count_heap[0][4])
-                            model.best_condition_path = condition_count_heap[0][5]
-                            pprint('updated model focus_pos: ' + str(model.focus_pos), num_indents=num_indents + 1)
-                            pprint('updated model best condition: ' + str(model.best_condition_id), num_indents=num_indents + 1)
-                            heapq.heappop(condition_count_heap)
-                        else:
-                            pprint('Keeping original best condition.', num_indents=num_indents + 1)
-                            heapq.heappop(condition_count_heap)
-
-                    else:
-                        heapq.heappop(condition_count_heap)
-
-                    if not condition_count_heap:
-                        break
-
-        condition_heap = []
-        condition_count_heap = []
-
-        if not model.best_condition_id:
-            for aux_index, aux_value in enumerate(model.aux_env):
-                model.focus_value = 'A' + str(aux_value)
-
-                if model.focus_value in focus_list:
-                    pprint('Aux focus_value = ' + str(model.focus_value), num_indents=num_indents + 1)
-                    condition_path = str(action) + '/' + str(output) + '/' + model.focus_value
-                    try:
-                        condition_list = self.knowledge[condition_path]
-                    except KeyError:
-                        condition_list = []
-
-                    for condition_id in condition_list:
-                        data_path = condition_path + '/' + str(condition_id) + '/'
-                        if aux_index == self.knowledge[data_path + 'focus_i']:
-                            condition_data_array = self.knowledge[data_path + 'vis_data']
-                            condition_aux_data_array = self.knowledge[data_path + 'aux_data']
-
-                            condition_dif = np.sum(array_dif(vis_model, condition_data_array))
-                            condition_dif += np.sum(array_dif(aux_model, condition_aux_data_array))
-
-                            heapq.heappush(condition_heap, (condition_dif, model.focus_value, aux_index, condition_id, data_path))
-
-            if condition_heap:
-                model.best_condition_dif = condition_heap[0][0]
-                model.focus_index = condition_heap[0][2]
-                model.best_condition_id = condition_heap[0][3]
-                model.best_condition_path = condition_heap[0][4]
-                heapq.heappop(condition_heap)
-
-        pprint('model.best_condition_id = ' + str(model.best_condition_id), num_indents=num_indents + 1)
-        pprint('model.best_condition_path = ' + str(model.best_condition_path), num_indents=num_indents + 1)
-        pprint('difference found. duration: %s' % (datetime.now() - start_time),
-            num_indents=1, new_line_start=True, draw_line=True)
-        '''
         return return_data
 
     def save_knowledge(self):
