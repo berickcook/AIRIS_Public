@@ -2053,7 +2053,31 @@ class AIRIS(object):
             except KeyError:
                 return_data = [[None, focus_value, condition_id, (None, None), data_path]]
         else:
+            try:
+                for aux_index, aux_value in enumerate(model.aux_env):
+                    model.focus_value = 'A' + str(aux_value)
 
+                    if model.focus_value in focus_list:
+                        pprint('Aux focus_value = ' + str(model.focus_value), num_indents=num_indents + 1)
+                        condition_path = str(action) + '/' + str(output) + '/' + model.focus_value
+                        try:
+                            condition_list = self.knowledge[condition_path]
+                        except KeyError:
+                            condition_list = []
+
+                        for condition_id in condition_list:
+                            data_path = condition_path + '/' + str(condition_id) + '/'
+                            if aux_index == self.knowledge[data_path + 'focus_i']:
+                                condition_data_array = self.knowledge[data_path + 'vis_data']
+                                condition_aux_data_array = self.knowledge[data_path + 'aux_data']
+
+                                condition_dif = np.sum(array_dif(vis_model, condition_data_array))
+                                condition_dif += np.sum(array_dif(aux_model, condition_aux_data_array))
+
+                                return_data.append([condition_dif, model.focus_value, (aux_index, None), condition_id, data_path])
+
+            except KeyError:
+                return_data = [[None, focus_value, condition_id, (None, None), data_path]]
         '''
         
         condition_heap = []
