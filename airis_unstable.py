@@ -2058,10 +2058,10 @@ class AIRIS(object):
                         print ('Error: Missing aux_cause data for ', condition_id)
                         raise Exception
 
-                    return_data.append([condition_dif, focus_value, condition_id, (focus_x, focus_y), data_path])
+                    return_data.append((condition_dif, focus_value, condition_id, (focus_x, focus_y), data_path))
 
             except KeyError:
-                return_data = [[None, focus_value, condition_id, (None, None), data_path]]
+                return_data = [(None, focus_value, condition_id, (None, None), data_path)]
 
         else:
             try:
@@ -2072,7 +2072,8 @@ class AIRIS(object):
 
                         try:
                             for _, _, prior_val, _, cond in self.knowledge[data_path + 'vis_cause']:
-                                if cond not in model.best_conditions:
+                                find_cond = [item for item in model.best_conditions if cond in item[3]]
+                                if not find_cond:
                                     condition_dif += 1
 
                             if not self.knowledge[data_path + 'vis_cause']:
@@ -2095,10 +2096,10 @@ class AIRIS(object):
                             print('Error: Missing aux_cause data for ', condition_id)
                             raise Exception
 
-                        return_data.append([condition_dif, focus_value, (aux_index, None), condition_id, data_path])
+                        return_data.append((condition_dif, focus_value, (aux_index, None), condition_id, data_path))
 
             except KeyError:
-                return_data = [[None, focus_value, condition_id, (None, None), data_path]]
+                return_data = [(None, focus_value, condition_id, (None, None), data_path)]
 
         return return_data
 
