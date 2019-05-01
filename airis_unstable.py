@@ -1230,24 +1230,18 @@ class AIRIS(object):
         # get the difference between memory and
         # what we're currently looking at
         model = self.models[self.current_model_index]
-        model.best_condition_id = None  # whip best condition just before we do a new prediction
-        model.best_condition_dif = None
+        model.best_conditions = []
 
         # action/output/focus_value/condition_id
         path = str(action) + '/' + str(output)
         pprint('path = ' + path, num_indents=num_indents + 1)
-        try:
-            focus_list = self.knowledge[path]
-        except KeyError:
-            focus_list = []
 
-        if focus_list:
-            while model_heap:
-                _, heap_val = heapq.heappop(model_heap)
-                pprint('heap_val = ' + str(heap_val), num_indents=num_indents + 1)
-                if str(heap_val) in focus_list:
-        model.focus_value = condition_count_heap[0][1]
-        model.focus_value_is_aux = False
+        model_heap = copy.deepcopy(model.vis_count_heap)
+
+        if model_heap:
+            _, heap_val = heapq.heappop(model_heap)
+            pprint('heap_val = ' + str(heap_val), num_indents=num_indents + 1)
+
         self.compare_conditions(action, output, self.current_model_index, focus_value,
             num_indents=num_indents + 1)
 
@@ -2013,10 +2007,9 @@ class AIRIS(object):
         start_time = datetime.now()
 
         model = self.models[model_index]
-        model_heap = copy.deepcopy(model.vis_count_heap)
         vis_model = copy.deepcopy(model.vis_env)
         aux_model = copy.deepcopy(model.aux_env)
-        # return_data[best_condition_dif, focus_value, condition_id, (posx, posy), path]
+        # return_data[best_condition_dif, focus_value, condition_id, (posx or auxindex, posy), path]
         return_data = []
         pprint(str(action), num_indents=num_indents + 1)
         pprint('model_index = %s' % model_index, num_indents=num_indents + 1)
