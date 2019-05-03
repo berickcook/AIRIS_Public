@@ -8,6 +8,10 @@ Requires Python 3.x
 
 See "requirements.txt" for additional required packages
 
+By default, the AI is configured to run parallelized on your CPU. You can reconfigure it to run on a CUDA compatible GPU by changing line 123 of other_useful_functions.py to the following:
+
+`@vectorize(['float32(float32, float32)'], target="cuda")`
+
 ###### The Cognitive Architecture of AIRIS 
 ![AIRIS Cognitive Architecture](https://airisai.files.wordpress.com/2019/01/airis-cognitive-architecture-3.png)
 
@@ -18,7 +22,11 @@ Included in the stable release are 3 test environments.
 Simply run either puzzle_game_driver.py / mnist_driver2.py / or basic_example.py
 
 ## puzzle_game_driver.py 
-A grid-world puzzle game with various obstacles. The goal is to collect all batteries in a level. 
+A grid-world puzzle game with various obstacles. The goal is to collect all batteries in a level.
+
+By default, this environnment is frame-limited to make it easier for the user to see what is happening. To remove this limitiation and allow the AI to operate at the maximum speed for your hardware, simply comment out line 1289.
+
+`1289: time.sleep(0.10) # control frame rate (in seconds)`
 
 ![Puzzle Game Level](https://airisai.files.wordpress.com/2019/01/puzzle-game-level.png)
 
@@ -33,8 +41,6 @@ You can then use the Left and Right arrow keys to step through each action the A
 Press the Space Bar on your keyboard to "approve" the plan and allow the AI to continue.
 
 To disable "view plan" mode, hold the Down Arrow
-
-###### Note: "view plan" mode not fully tested and may cause instabilities!
 
 ## mnist_driver2.py
 Number recognition using the MNIST hand-written character dataset
