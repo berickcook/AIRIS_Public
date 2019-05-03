@@ -155,4 +155,4 @@ What is the label for this word?
 Enter a word:
 ```
 
-## Special Thanks to Lucius Dickerson for helping to teach me Python, fixing my newbie mistakes, and for porting the test environments!
+## Special Thanks to Lucius Dickerson (lucius.dickerson@gmail.com) for helping to teach me Python, fixing my newbie mistakes, and for porting the test environments!
