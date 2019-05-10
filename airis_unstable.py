@@ -1239,25 +1239,32 @@ class AIRIS(object):
         model_heap = copy.deepcopy(model.vis_count_heap)
 
         while model_heap:
-            _, heap_val = heapq.heappop(model_heap)
-            pprint('heap_val for focus = ' + str(heap_val), num_indents=num_indents + 1)
+            _, focus_val = heapq.heappop(model_heap)
 
             try:
-                for heap_x, heap_y in model.vis_count_pos[heap_val]:
-                    condition_heap = []
-                    heapq.heapify(condition_heap)
+                if focus_val in self.knowledge[path]:
+                    pprint('focus_value for current prediction = ' + str(focus_val), num_indents=num_indents + 1)
 
-                    for check_condition in self.knowledge[path + str(heap_val)]:
-                        if not model.best_conditions:
-                            # action, output, model_index, focus_value, focus_x, focus_y, focus_index, condition_id, num_indents
-                            heapq.heappush(condition_heap, self.compare_conditions(action, output, self.current_model_index, heap_val, heap_x, heap_y, check_condition, num_indents=num_indents + 1))
+                    try:
+                        if model.vis_count_pos[focus_val]:
+                            base_diff = None
+                            condition_heap = []
+                            heapq.heapify(condition_heap)
 
-                    model.best_conditions.append(condition_heap[0])
+                            for check_condition in self.knowledge[path + str(focus_val)]:
+                                # action, output, model_index, focus_val, condition_id, base_diff, num_indents
+                                result = self.compare_conditions(action, output, self.current_model_index, focus_val, check_condition, base_diff, num_indents=num_indents + 1)
+                                if result:
+                                    heapq.heappush(condition_heap, result)
+                                base_diff = condition_heap[0][0]
 
+                            # (best_condition_dif, focus_value, condition_id, (posx or auxindex, posy), path)
+                            model.best_conditions.append(condition_heap[0])
+
+                    except KeyError:
+                        pprint('value ( ' + focus_value + ' ) not found in model')
             except KeyError:
-                pass
-            except ValueError:
-                pass
+                pprint('no known values to predict')
 
         # get the path of the prior focus value in the knowledge
         path = str(action) + '/' + str(output) + '/' +  \
@@ -2013,7 +2020,7 @@ class AIRIS(object):
         self.vis_change_list_prev = self.vis_change_list
         self.aux_change_list_prev = self.aux_change_list
 
-    def compare_conditions(self, action, output, model_index, focus_value, focus_x, focus_y, focus_index, condition_id, num_indents=0):
+    def compare_conditions(self, action, output, model_index, focus_value, condition_id, base_diff, num_indents=0):
 
         # get the best condition
         pprint('getting the difference between memory and what we\'re currently looking at',
@@ -2039,6 +2046,10 @@ class AIRIS(object):
                         if vis_model[x][y] != prior_val:
                             condition_dif += abs(vis_model[x][y] - prior_val)
 
+                if base_diff:
+                    if condition_dif > base_diff:
+                        return None
+
                 if not self.knowledge[data_path + 'vis_cause']:
                     condition_data_array = self.knowledge[data_path + 'vis_data']
                     condition_aux_data_array = self.knowledge[data_path + 'aux_data']
@@ -2059,16 +2070,22 @@ class AIRIS(object):
                 print ('Error: Missing aux_cause data for ', condition_id)
                 raise Exception
 
+            if not self.knowledge[data_path + 'action_cause'] == action:
+                condition_dif += 1
+
             return_data = (condition_dif, focus_value, condition_id, (focus_x, focus_y), data_path)
 
         else:
             pprint('Aux focus_value = ' + str(focus_value), num_indents=num_indents + 1)
             condition_dif = 0
             try:
-                for _, _, prior_val, _, cond in self.knowledge[data_path + 'vis_cause']:
-                    find_cond = [item for item in model.best_conditions if cond in item[3]]
-                    if not find_cond:
-                        condition_dif += 1
+                for ind, _, prior_val, _, _ in self.knowledge[data_path + 'aux_cause']:
+                    if aux_model[ind] != prior_val:
+                        condition_dif += abs(aux_model[ind] - prior_val)
+
+                    if base_diff:
+                        if condition_dif > base_diff:
+                            return None
 
                 if not self.knowledge[data_path + 'vis_cause']:
                     condition_data_array = self.knowledge[data_path + 'vis_data']
@@ -2089,6 +2106,9 @@ class AIRIS(object):
             except KeyError:
                 print('Error: Missing aux_cause data for ', condition_id)
                 raise Exception
+
+            if not self.knowledge[data_path + 'action_cause'] == action:
+                condition_dif += 1
 
             return_data = (condition_dif, focus_value, condition_id, (focus_index, None), data_path)
 
