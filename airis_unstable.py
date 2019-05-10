@@ -1246,20 +1246,19 @@ class AIRIS(object):
                     pprint('focus_value for current prediction = ' + str(focus_val), num_indents=num_indents + 1)
 
                     try:
-                        if model.vis_count_pos[focus_val]:
-                            base_diff = None
-                            condition_heap = []
-                            heapq.heapify(condition_heap)
+                        base_diff = None
+                        condition_heap = []
+                        heapq.heapify(condition_heap)
 
-                            for check_condition in self.knowledge[path + str(focus_val)]:
-                                # action, output, model_index, focus_val, condition_id, base_diff, num_indents
-                                result = self.compare_conditions(action, output, self.current_model_index, focus_val, check_condition, base_diff, num_indents=num_indents + 1)
-                                if result:
-                                    heapq.heappush(condition_heap, result)
-                                base_diff = condition_heap[0][0]
+                        for check_condition in self.knowledge[path + str(focus_val)]:
+                            # action, output, model_index, focus_val, condition_id, base_diff, num_indents
+                            result = self.compare_conditions(action, output, self.current_model_index, focus_val, check_condition, base_diff, num_indents=num_indents + 1)
+                            if result:
+                                heapq.heappush(condition_heap, result)
+                            base_diff = condition_heap[0][0]
 
-                            # (best_condition_dif, focus_value, condition_id, (posx or auxindex, posy), path)
-                            model.best_conditions.append(condition_heap[0])
+                        # (best_condition_dif, focus_value, condition_id, (posx or auxindex, posy), path)
+                        model.best_conditions.append(condition_heap[0])
 
                     except KeyError:
                         pprint('value ( ' + focus_value + ' ) not found in model')
