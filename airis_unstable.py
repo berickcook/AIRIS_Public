@@ -1851,6 +1851,8 @@ class AIRIS(object):
                 change_condition_id = self.knowledge['last condition id']
                 self.knowledge['last condition id'] += 1
 
+            change_condition_id = str(change_condition_id)
+
             A = str(A)
             condition_focus_value = str(condition_focus_value)
             try:
@@ -1867,6 +1869,14 @@ class AIRIS(object):
                 self.knowledge[path] = [change_condition_id]
             except ValueError:
                 self.knowledge[path].append(change_condition_id)
+
+            # cond/condition_id/focus_value
+            try:
+                self.knowledge['cond/'+change_condition_id].index(A+condition_focus_value)
+            except KeyError:
+                self.knowledge['cond/'+change_condition_id] = [A+condition_focus_value]
+            except ValueError:
+                self.knowledge['cond/'+change_condition_id].append(A+condition_focus_value)
 
             # focus_value/condition_id/[data]
             path = A + condition_focus_value
