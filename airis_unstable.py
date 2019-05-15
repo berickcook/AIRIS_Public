@@ -1233,7 +1233,7 @@ class AIRIS(object):
         model.best_conditions = []
 
         # action/output/focus_value/condition_id
-        path = str(action) + '/' + str(output) + '/'
+        path = str(action) + '/' + str(output)
         pprint('path = ' + path, num_indents=num_indents + 1)
 
         model_heap = copy.deepcopy(model.vis_count_heap)
@@ -1242,7 +1242,7 @@ class AIRIS(object):
             _, focus_val = heapq.heappop(model_heap)
 
             try:
-                if focus_val in self.knowledge[path]:
+                if str(focus_val) in self.knowledge[path]:
                     pprint('focus_value for current prediction = ' + str(focus_val), num_indents=num_indents + 1)
 
                     try:
@@ -1250,7 +1250,7 @@ class AIRIS(object):
                         condition_heap = []
                         heapq.heapify(condition_heap)
 
-                        for check_condition in self.knowledge[path + str(focus_val)]:
+                        for check_condition in self.knowledge[path + '/' + str(focus_val)]:
                             # action, output, model_index, focus_val, condition_id, base_diff, num_indents
                             result = self.compare_conditions(action, output, self.current_model_index, focus_val, check_condition, base_diff, num_indents=num_indents + 1)
                             if result:
@@ -1258,10 +1258,22 @@ class AIRIS(object):
                             base_diff = condition_heap[0][0]
 
                         # (best_condition_dif, focus_value, condition_id, (posx or auxindex, posy), path)
-                        model.best_conditions.append(condition_heap[0])
+                        model.best_conditions = [condition_heap[0]]
 
                     except KeyError:
-                        pprint('value ( ' + focus_value + ' ) not found in model')
+                        pprint('Knowledge')
+
+                if model.best_conditions:
+                    base_condition = str(model.best_conditions[0])
+                    for val in self.knowledge['cond/'+base_condition]:
+                        try:
+                            if model.vis_count[val]:
+                                base_diff = None
+                                for ref_data in [item for item in self.knowledge[str(focus_val)+'/'+base_condition+'/'+'vis_ref'] if item[2] == val]:
+                                    result = self.compare_conditions(action, output, self.current_model_index, val, ref_data[4], base_diff, num_indents=num_indents + 1)
+                        except KeyError:
+                            pass
+
             except KeyError:
                 pprint('no known values to predict')
 
@@ -1923,6 +1935,8 @@ class AIRIS(object):
                     dy = ref_y - focus_y
                     vis_ref_data = (dx, dy, ref_prior_val, ref_posterior_val, ref_change_condition_id)
                     try:
+                        self.knowledge[path + 'vis_ref'].index(vis_ref_data)
+                    except ValueError:
                         self.knowledge[path + 'vis_ref'].append(vis_ref_data)
                     except KeyError:
                         self.knowledge[path + 'vis_ref'] = [vis_ref_data]
