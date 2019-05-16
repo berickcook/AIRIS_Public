@@ -1252,7 +1252,7 @@ class AIRIS(object):
 
                         for check_condition in self.knowledge[path + '/' + str(focus_val)]:
                             # action, output, model_index, focus_val, condition_id, base_diff, num_indents
-                            result = self.compare_conditions(action, output, self.current_model_index, focus_val, check_condition, base_diff, num_indents=num_indents + 1)
+                            result = self.compare_conditions(action, output, self.current_model_index, focus_val, check_condition, base_diff, None, num_indents=num_indents + 1)
                             if result:
                                 heapq.heappush(condition_heap, result)
                             base_diff = condition_heap[0][0]
@@ -1265,12 +1265,17 @@ class AIRIS(object):
 
                 if model.best_conditions:
                     base_condition = str(model.best_conditions[0])
+                    condition_candidate_data = {}
+                    condition_candidate = []
                     for val in self.knowledge['cond/'+base_condition]:
                         try:
                             if model.vis_count[val]:
-                                base_diff = None
                                 for ref_data in [item for item in self.knowledge[str(focus_val)+'/'+base_condition+'/'+'vis_ref'] if item[2] == val]:
-                                    result = self.compare_conditions(action, output, self.current_model_index, val, ref_data[4], base_diff, num_indents=num_indents + 1)
+                                    results = self.compare_conditions(action, output, self.current_model_index, val, ref_data[4], None, condition_candidate_data, num_indents=num_indents + 1)
+                                    for result in results:
+                                        condition_candidate_data[str(result[1])+'/'+str(result[3][0])+','+str(result[3][1])] = result
+                                        if str(result[1])+'/'+str(result[3][0])+','+str(result[3][1]) not in condition_candidate:
+                                            condition_candidate.append(str(result[1])+'/'+str(result[3][0])+','+str(result[3][1]))
                         except KeyError:
                             pass
 
@@ -2043,7 +2048,7 @@ class AIRIS(object):
         self.vis_change_list_prev = self.vis_change_list
         self.aux_change_list_prev = self.aux_change_list
 
-    def compare_conditions(self, action, output, model_index, focus_value, condition_id, base_diff, num_indents=0):
+    def compare_conditions(self, action, output, model_index, focus_value, condition_id, base_diff, condition_candidate_data, num_indents=0):
 
         # get the best condition
         pprint('getting the difference between memory and what we\'re currently looking at',
@@ -2060,41 +2065,52 @@ class AIRIS(object):
         pprint('focus_value = ' + str(focus_value), num_indents=num_indents + 1)
         data_path = str(focus_value) + '/' + str(condition_id) + '/'
 
-        if focus_value[0] != 'A':
-            condition_dif = 0
-            try:
-                for dx, dy, prior_val, _, _ in self.knowledge[data_path + 'vis_cause']:
-                    x, y = focus_x + dx, focus_y + dy
-                    if 0 <= x < len(vis_model) and 0 <= y < len(vis_model[0]):
-                        if vis_model[x][y] != prior_val:
-                            condition_dif += abs(vis_model[x][y] - prior_val)
+        if str(focus_value)[0] != 'A':
+            for focus_x, focus_y in model.vis_count_pos[focus_value]:
+                condition_dif = 0
+                try:
+                    cause_heap = copy.deepcopy(model.vis_count_heap)
+                    while cause_heap:
+                        cause_val = heapq.heappop(cause_heap)
+                        for dx, dy, prior_val, _, _ in [item for item in self.knowledge[data_path + 'vis_cause'] if item[2] == cause_val]:
+                            x, y = focus_x + dx, focus_y + dy
+                            if 0 <= x < len(vis_model) and 0 <= y < len(vis_model[0]):
+                                if vis_model[x][y] != prior_val:
+                                    condition_dif += abs(vis_model[x][y] - prior_val)
 
-                if base_diff:
-                    if condition_dif > base_diff:
-                        return None
+                        if not self.knowledge[data_path + 'vis_cause']:
+                            condition_data_array = self.knowledge[data_path + 'vis_data']
+                            condition_aux_data_array = self.knowledge[data_path + 'aux_data']
 
-                if not self.knowledge[data_path + 'vis_cause']:
-                    condition_data_array = self.knowledge[data_path + 'vis_data']
-                    condition_aux_data_array = self.knowledge[data_path + 'aux_data']
+                            condition_dif = np.sum(array_dif(vis_model, condition_data_array))
+                            condition_dif += np.sum(array_dif(aux_model, condition_aux_data_array))
 
-                    condition_dif = np.sum(array_dif(vis_model, condition_data_array))
-                    condition_dif += np.sum(array_dif(aux_model, condition_aux_data_array))
+                        if base_diff:
+                            if condition_dif > base_diff:
+                                break
 
-            except KeyError:
-                print ('Error: Missing vis_cause data for ', condition_id)
-                raise Exception
+                        if condition_candidate_data:
+                            try:
+                                if condition_dif > condition_candidate_data[str(focus_value)+'/'+str(focus_x)+','+str(focus_y)][0]:
+                                    break
+                            except KeyError:
+                                pass
 
-            try:
-                for i, _, prior_val, _, _ in self.knowledge[data_path + 'aux_cause']:
-                    if i < len(aux_model):
-                        if aux_model[i] != prior_val:
-                            condition_dif += abs(aux_model[i] - prior_val)
-            except KeyError:
-                print ('Error: Missing aux_cause data for ', condition_id)
-                raise Exception
+                except KeyError:
+                    print ('Error: Missing vis_cause data for ', condition_id)
+                    raise Exception
 
-            if not self.knowledge[data_path + 'action_cause'] == action:
-                condition_dif += 1
+                try:
+                    for i, _, prior_val, _, _ in self.knowledge[data_path + 'aux_cause']:
+                        if i < len(aux_model):
+                            if aux_model[i] != prior_val:
+                                condition_dif += abs(aux_model[i] - prior_val)
+                except KeyError:
+                    print ('Error: Missing aux_cause data for ', condition_id)
+                    raise Exception
+
+                if not self.knowledge[data_path + 'action_cause'] == action:
+                    condition_dif += 1
 
             return_data = (condition_dif, focus_value, condition_id, (focus_x, focus_y), data_path)
 
