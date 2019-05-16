@@ -1237,6 +1237,8 @@ class AIRIS(object):
         pprint('path = ' + path, num_indents=num_indents + 1)
 
         model_heap = copy.deepcopy(model.vis_count_heap)
+        condition_candidate_data = {}
+        condition_candidate = []
 
         while model_heap:
             _, focus_val = heapq.heappop(model_heap)
@@ -1265,8 +1267,6 @@ class AIRIS(object):
 
                 if model.best_conditions:
                     base_condition = str(model.best_conditions[0])
-                    condition_candidate_data = {}
-                    condition_candidate = []
                     for val in self.knowledge['cond/'+base_condition]:
                         try:
                             if model.vis_count[val]:
