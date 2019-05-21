@@ -1245,42 +1245,43 @@ class AIRIS(object):
 
             try:
                 if str(focus_val) in self.knowledge[path]:
-                    pprint('focus_value for current prediction = ' + str(focus_val), num_indents=num_indents + 1)
+                    pprint('focus_value for initial prediction = ' + str(focus_val), num_indents=num_indents + 1)
 
                     try:
-                        base_diff = None
-                        condition_heap = []
-                        heapq.heapify(condition_heap)
-
                         for check_condition in self.knowledge[path + '/' + str(focus_val)]:
-                            # action, output, model_index, focus_val, condition_id, base_diff, num_indents
-                            result = self.compare_conditions(action, output, self.current_model_index, focus_val, check_condition, base_diff, None, num_indents=num_indents + 1)
-                            if result:
-                                heapq.heappush(condition_heap, result)
-                            base_diff = condition_heap[0][0]
+                            # action, output, model_index, focus_val, condition_id, condition_candidate_data
+                            results = self.compare_conditions(action, output, self.current_model_index, focus_val, check_condition, condition_candidate_data, num_indents=num_indents + 1)
+                            for result in results:
+                                condition_candidate_data[str(result[1])+'/'+str(result[3][0])+','+str(result[3][1])] = result
+                                if str(result[1]) + '/' + str(result[3][0]) + ',' + str(result[3][1]) not in condition_candidate:
+                                    condition_candidate.append(str(result[1]) + '/' + str(result[3][0]) + ',' + str(result[3][1]))
 
-                        # (best_condition_dif, focus_value, condition_id, (posx or auxindex, posy), path)
-                        model.best_conditions = [condition_heap[0]]
+                        for address in condition_candidate:
+                            model.best_conditions.append(condition_candidate_data[address])
 
                     except KeyError:
-                        pprint('Knowledge')
+                        pprint('Knowledge Error')
+                        raise Exception
 
                 if model.best_conditions:
-                    base_condition = str(model.best_conditions[0])
-                    for val in self.knowledge['cond/'+base_condition]:
-                        try:
-                            if model.vis_count[val]:
-                                for ref_data in [item for item in self.knowledge[str(focus_val)+'/'+base_condition+'/'+'vis_ref'] if item[2] == val]:
-                                    results = self.compare_conditions(action, output, self.current_model_index, val, ref_data[4], None, condition_candidate_data, num_indents=num_indents + 1)
-                                    for result in results:
-                                        condition_candidate_data[str(result[1])+'/'+str(result[3][0])+','+str(result[3][1])] = result
-                                        if str(result[1])+'/'+str(result[3][0])+','+str(result[3][1]) not in condition_candidate:
-                                            condition_candidate.append(str(result[1])+'/'+str(result[3][0])+','+str(result[3][1]))
-                        except KeyError:
-                            pass
+                    for base_condition in model.best_conditions:
+                        for val in self.knowledge['cond/'+str(base_condition[2])]:
+                            try:
+                                if model.vis_count[val]:
+                                    for ref_data in [item for item in self.knowledge[str(focus_val)+'/'+str(base_condition[2])+'/'+'vis_ref'] if item[2] == val]:
+                                        results = self.compare_conditions(action, output, self.current_model_index, val, ref_data[4], condition_candidate_data, num_indents=num_indents + 1)
+                                        for result in results:
+                                            condition_candidate_data[str(result[1])+'/'+str(result[3][0])+','+str(result[3][1])] = result
+                                            if str(result[1])+'/'+str(result[3][0])+','+str(result[3][1]) not in condition_candidate:
+                                                condition_candidate.append(str(result[1])+'/'+str(result[3][0])+','+str(result[3][1]))
+                            except KeyError:
+                                pass
 
             except KeyError:
                 pprint('no known values to predict')
+
+        # (best_condition_dif, focus_value, condition_id, (posx or auxindex, posy), path)
+        # model.best_conditions = all of the above
 
         # get the path of the prior focus value in the knowledge
         path = str(action) + '/' + str(output) + '/' +  \
@@ -2048,7 +2049,7 @@ class AIRIS(object):
         self.vis_change_list_prev = self.vis_change_list
         self.aux_change_list_prev = self.aux_change_list
 
-    def compare_conditions(self, action, output, model_index, focus_value, condition_id, base_diff, condition_candidate_data, num_indents=0):
+    def compare_conditions(self, action, output, model_index, focus_value, condition_id, condition_candidate_data, num_indents=0):
 
         # get the best condition
         pprint('getting the difference between memory and what we\'re currently looking at',
@@ -2074,6 +2075,8 @@ class AIRIS(object):
                         base_diff = condition_candidate_data[str(focus_value) + '/' + str(focus_x) + ',' + str(focus_y)][0]
                     except KeyError:
                         base_diff = None
+                else:
+                    base_diff = None
 
                 try:
                     if self.knowledge[data_path + 'vis_cause']:
