@@ -42,6 +42,39 @@ Press the Space Bar on your keyboard to "approve" the plan and allow the AI to c
 
 To disable "view plan" mode, hold the Down Arrow
 
+## puzzle_game_driver_universal.py
+The same grid-world puzzle game, but with all AIRIS dependencies stripped out. This environment is for use with any other AI algorithm. 
+
+It is designed to send 2 environmental arrays to an AI: A 20 x 15 grid of the game world filled with the integer IDs that represent the various game objects, and a 1 x 2 grid of integers that represent the number of Keys collected and Fire Extinguishers collected respectively.
+
+    ----------------------------------------------------
+    id   Object
+    ----------------------------------------------------
+    0    floor
+    1    character
+    2    wall
+    3    battery
+    4    door
+    5    key
+    6    fire extinguisher
+    7    fire
+    8    1 way arrow right
+    9    1 way arrow left
+    10   1 way arrow down
+    11   1 way arrow up
+    12   open door
+    13   player character standing on top of right arrow
+    14   player character standing on top of left arrow
+    15   player character standing on top of down arrow
+    16   player character standing on top of up arrow
+    17   player character standing in open door
+    ----------------------------------------------------
+    (source: game_objects.py)
+
+It expects one of 5 actions to be returned: 'up', 'down', 'left', 'right', or 'nothing'. It then updates the game environnent accordingly, and sends the updated game environment arrays to the AI so that the AI can observe the changes.
+
+By default, it is set to be human controlled with the arrow keys. This can be changed by setting ai_controlled to TRUE on line 1136. Just make sure your ai can get and return the necessary values (See line 129 and line 157).
+
 ## mnist_driver2.py
 Number recognition using the MNIST hand-written character dataset
 
