@@ -73,7 +73,7 @@ It is designed to send 2 environmental arrays to an AI: A 20 x 15 grid of the ga
 
 It expects one of 5 actions to be returned: 'up', 'down', 'left', 'right', or 'nothing'. It then updates the game environnent accordingly, and sends the updated game environment arrays to the AI so that the AI can observe the changes.
 
-By default, it is set to be human controlled with the arrow keys. This can be changed by setting ai_controlled to TRUE on line 1136. Just make sure your ai can get and return the necessary values (See line 129 and line 157).
+By default, it is set to be human controlled with the arrow keys. This can be changed by setting ai_controlled to TRUE on line 1136. Just make sure your AI can get, handle, and return the necessary values (See line 129 and line 157).
 
 ## mnist_driver2.py
 Number recognition using the MNIST hand-written character dataset
