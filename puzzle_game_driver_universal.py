@@ -1077,8 +1077,7 @@ class PyGameKeyboardController(object):
                 if event.type != KEYDOWN:
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         mouse_pos = pygame.mouse.get_pos()
-                        print ('mouse interrupt')
-                        interrupt = input()
+
                         #print('mouse position = (%d,%d)') % (mouse_pos[0], mouse_pos[1])
 
                         if event.button == 4:
