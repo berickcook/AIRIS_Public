@@ -1825,6 +1825,8 @@ class AIRIS(object):
 
         self.print_knowledge(num_indents=num_indents + 1, new_line_start=True)
 
+        self.save_knowledge()
+
         pprint('update complete. duration: %s' % (datetime.now() - start_time),
             num_indents=num_indents, new_line_start=True, draw_line=True)
 

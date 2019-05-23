@@ -1183,27 +1183,31 @@ class PyGameKeyboardController(object):
             is_there_input = True
             self.player_input = 'up'
             number_of_keys_pressed += 1
-            self.bypass = False
+            if airis_controlled:
+                self.bypass = False
             # print('up')
         if keys[pygame.K_DOWN]:
             is_there_input = True
             self.player_input = 'down'
             number_of_keys_pressed += 1
-            self.bypass = True
+            if airis_controlled:
+                self.bypass = True
             # print('down')
         if keys[pygame.K_LEFT]:
             is_there_input = True
             self.player_input = 'left'
             number_of_keys_pressed += 1
-            if self.mind_index > 0:
-                self.mind_index -= 1
+            if airis_controlled:
+                if self.mind_index > 0:
+                    self.mind_index -= 1
             # print('left')
         if keys[pygame.K_RIGHT]:
             is_there_input = True
             self.player_input = 'right'
             number_of_keys_pressed += 1
-            if self.mind_index < self.mind_len-1:
-                self.mind_index += 1
+            if airis_controlled:
+                if self.mind_index < self.mind_len-1:
+                    self.mind_index += 1
             # print('right')
         if number_of_keys_pressed > 1:
             # print('>1')
