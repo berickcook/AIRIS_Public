@@ -461,24 +461,22 @@ if __name__ == '__main__':
                 view.screen.blit(view.surface, (0,0))
                 pygame.display.update()
 
-        # if there's user input
-        if there_is_input or first_update:
-            there_is_input, first_update = False, False
-            # update the model
-            if not controller.paused:
+        else:
+            if there_is_input or first_update:
+                there_is_input, first_update = False, False
+                # update the model
                 model.update()
 
-            # display the view
-            if GAME_SHOW_SCREEN and view.show_view:
-                view.draw()
-                view.screen.blit(view.surface, (0,0))
-                pygame.display.update()
+                # display the view
+                if GAME_SHOW_SCREEN and view.show_view:
+                    view.draw()
+                    view.screen.blit(view.surface, (0,0))
+                    pygame.display.update()
 
-            # reset user input
-            controller.player_input = 'nothing'
+                # reset user input
+                controller.player_input = 'nothing'
 
-            # update again if player won or died
-            if not controller.paused:
+                # update again if player won or died
                 if model.batteries_collected == model.num_batteries or model.maze_reset:
                     model.update()
                     # display the view
