@@ -364,6 +364,8 @@ class PyGameKeyboardController(object):
 
         self.paused = True
         self.player_input = 'nothing'
+        self.mb_left = False
+        self.mb_right = False
 
     def handle_input(self):
 
@@ -380,15 +382,16 @@ class PyGameKeyboardController(object):
                         print('mouse position = ',mouse_pos[0], mouse_pos[1])
 
                         if event.button == 1:
-                            if 8 <= mouse_pos[0] <= 528 and 8 <= mouse_pos[1] <= 56:
-                                view.obj_select = (mouse_pos[0]-8) // 48
-                                print(view.obj_select)
-                            print('mouse left click')
+                            self.mb_left = True
                         elif event.button == 3:
-                            if 64 < mouse_pos[1] < 544:
-                                model.game_map[mouse_pos[0] // 32][(mouse_pos[1]-64) // 32] = model.floor
-                                print(mouse_pos[0] // 32, (mouse_pos[1]-64) // 32)
-                            print('mouse right click')
+                            self.mb_right = True
+
+                    if event.type == pygame.MOUSEBUTTONUP:
+
+                        if event.button == 1:
+                            self.mb_left = False
+                        elif event.button == 3:
+                            self.mb_right = False
 
                 elif event.key == pygame.K_SPACE:
                     self.paused = not self.paused
@@ -396,6 +399,14 @@ class PyGameKeyboardController(object):
                     view.show_controls = not view.show_controls
                 elif event.key == pygame.K_v:
                     view.show_view = not view.show_view
+
+        mouse_pos = pygame.mouse.get_pos()
+        if self.mb_left:
+            if 8 <= mouse_pos[0] <= 528 and 8 <= mouse_pos[1] <= 56:
+                view.obj_select = (mouse_pos[0] - 8) // 48
+        if self.mb_right:
+            if 64 < mouse_pos[1] < 544:
+                model.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = model.floor
 
         keys = pygame.key.get_pressed()  # checking pressed keys
         original_player_input = self.player_input
@@ -491,8 +502,7 @@ if __name__ == '__main__':
                     # therefore this is just a way to automatically
                     # load the next level or reload the current level
                     # on win or death without having to click anything
-
-        time.sleep(0.10) # control frame rate (in seconds)
+            time.sleep(0.10)  # control frame rate (in seconds)
 
     pygame.quit()
     sys.exit()
