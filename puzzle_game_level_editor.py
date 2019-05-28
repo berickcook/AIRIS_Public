@@ -1,5 +1,5 @@
 import pygame
-import time, sys, csv
+import time, sys, csv, copy
 from pygame.locals import QUIT, KEYDOWN
 from editor_objects import *
 from editor_constants import *
@@ -21,7 +21,7 @@ class PyGameView(object):
         self.show_controls = False # toggle control display
 
         self.obj_select = 0
-        self.lvl_val = 0
+        self.lvl_val = model.wall
 
         self.sprites = []
         self.sprites.append(pygame.image.load('./images/Puzzle_Game/Game/WallS_0.png'))
@@ -45,26 +45,35 @@ class PyGameView(object):
         pygame.draw.rect(self.surface, 4210752, pygame.Rect(0, 0, 640, 64))
         pygame.draw.rect(self.surface, 4210752, pygame.Rect(0, 544, 640, 64))
 
-        pygame.draw.rect(self.surface, 8421504, pygame.Rect(2,2,636,60))
-        pygame.draw.rect(self.surface, 8421504, pygame.Rect(2,546,636,60))
+        pygame.draw.rect(self.surface, 8421504, pygame.Rect(2, 2, 636, 60))
+        pygame.draw.rect(self.surface, 8421504, pygame.Rect(2, 546, 636, 60))
 
-        pygame.draw.rect(self.surface, 12632256, pygame.Rect(4,4,632,56))
-        pygame.draw.rect(self.surface, 12632256, pygame.Rect(4,548,632,56))
+        pygame.draw.rect(self.surface, 12632256, pygame.Rect(4, 4, 632, 56))
+        pygame.draw.rect(self.surface, 12632256, pygame.Rect(4, 548, 632, 56))
 
-        for i in range(11):
-            if self.obj_select == i:
-                pygame.draw.rect(self.surface, 16777215, pygame.Rect(8+(48*i), 8, 48, 48))
+        if controller.paused:
+            for i in range(11):
+                if self.obj_select == i:
+                    pygame.draw.rect(self.surface, 16777215, pygame.Rect(8+(48*i), 8, 48, 48))
+                else:
+                    pygame.draw.rect(self.surface, 8421504, pygame.Rect(8+(48*i), 8, 48, 48))
+
+                pygame.draw.rect(self.surface, 0, pygame.Rect(8+(48*i),8,48,48), 1)
+                self.surface.blit(self.sprites[i], ((16*(i+1))+(32*i), 16))
+
+            if model.character_start_pos == (-1, -1) or model.num_batteries == 0:
+                pygame.draw.rect(self.surface, 4210752, pygame.Rect(544, 16, 84, 32))
+                pygame.draw.rect(self.surface, 8421504, pygame.Rect(546, 18, 80, 28))
+                if model.num_batteries == 0:
+                    self.draw_text("NO BATTS", 548, 25, 23)
+                elif model.character_start_pos == (-1, -1):
+                    self.draw_text("NO BOT", 556, 25, 23)
             else:
-                pygame.draw.rect(self.surface, 8421504, pygame.Rect(8+(48*i), 8, 48, 48))
+                pygame.draw.rect(self.surface, 32768, pygame.Rect(544, 16, 84, 32))
+                pygame.draw.rect(self.surface, 65280, pygame.Rect(546, 18, 80, 28))
+                self.draw_text("PLAY", 568, 25, 23)
 
-            pygame.draw.rect(self.surface, 0, pygame.Rect(8+(48*i),8,48,48), 1)
-            self.surface.blit(self.sprites[i], ((16*(i+1))+(32*i), 16))
         self.draw_game_map()
-
-        # draw control key
-        if self.show_controls:
-            for n, line in enumerate(PUZZLE_GAME_CONTROL_KEY):
-                self.draw_text(line, PUZZLE_GAME_CONTROL_KEY_START[0], PUZZLE_GAME_CONTROL_KEY_START[1]+14*n, 20)
 
         # update display
         pygame.display.update()
@@ -79,12 +88,12 @@ class PyGameView(object):
         for x in range(w):
             for y in range(h):
                 if self.model.change_in_game_map[x][y]:
-                    self.model.game_map[x][y].draw_game_image(self, x, y)
+                   self.model.game_map[x][y].draw_game_image(self, x, y)
 
-    def draw_text(self, text, x, y, size, color = (100, 100, 100)):
+    def draw_text(self, text, x, y, size, color = (0, 0, 0)):
         basicfont = pygame.font.SysFont(None, size)
         text_render = basicfont.render(
-            text, True, color)
+            text, False, color)
         self.surface.blit(text_render, (x, y))
 
 
@@ -112,6 +121,7 @@ class Model(object):
         self.make_singletons()
         self.current_maze = 0
         self.get_next_maze()
+        self.set_change_in_game_map(True)
 
     # this function updates the model
     def update(self):
@@ -125,12 +135,19 @@ class Model(object):
         self.game_logic(player_action)
 
         # go to next level if player beats the current level
-        if self.batteries_collected == self.num_batteries:
-            self.get_next_maze()
-
-        # reset the maze if the character dies
-        if self.maze_reset:
-            self.get_next_maze()
+        if self.batteries_collected == self.num_batteries or self.maze_reset:
+            if self.batteries_collected == self.num_batteries:
+                controller.paused = True
+            self.game_map = copy.deepcopy(controller.game_map)
+            self.character_current_pos = copy.deepcopy(controller.character_start_pos)
+            self.character_start_pos = copy.deepcopy(controller.character_start_pos)
+            self.num_batteries = copy.deepcopy(controller.num_batteries)
+            self.character_current_floor = self.floor
+            self.batteries_collected = 0
+            self.extinguishers_collected = 0
+            self.keys_collected = 0
+            self.set_change_in_game_map(True)
+            controller.is_there_input = True
 
     def get_action(self):
         return self.controller.player_input
@@ -304,8 +321,8 @@ class Model(object):
         except IndexError:
             self.game_map = self.floor_init()
             self.num_batteries = 0
-            self.character_start_pos = (0, 0)
-            self.character_current_pos = (0, 0)
+            self.character_start_pos = (-1, -1)
+            self.character_current_pos = (-1, -1)
             self.character_current_floor = self.floor
 
         self.batteries_collected = 0
@@ -366,25 +383,31 @@ class PyGameKeyboardController(object):
         self.player_input = 'nothing'
         self.mb_left = False
         self.mb_right = False
+        self.first = True
+        self.num_batteries = 0
+        self.character_start_pos = (-1, -1)
+        self.is_there_input = False
 
     def handle_input(self):
 
-        is_there_input = False
+        self.is_there_input = False
+
+        if self.first:
+            self.game_map = self.floor_init()
+            self.first = False
 
         for event in pygame.event.get():
             if event.type == QUIT:
-                return False, is_there_input
+                return False, self.is_there_input
             else:
                 if event.type != KEYDOWN:
                     if event.type == pygame.MOUSEBUTTONDOWN:
-                        mouse_pos = pygame.mouse.get_pos()
 
-                        print('mouse position = ',mouse_pos[0], mouse_pos[1])
-
-                        if event.button == 1:
-                            self.mb_left = True
-                        elif event.button == 3:
-                            self.mb_right = True
+                        if self.paused:
+                            if event.button == 1:
+                                self.mb_left = True
+                            elif event.button == 3:
+                                self.mb_right = True
 
                     if event.type == pygame.MOUSEBUTTONUP:
 
@@ -394,7 +417,19 @@ class PyGameKeyboardController(object):
                             self.mb_right = False
 
                 elif event.key == pygame.K_SPACE:
-                    self.paused = not self.paused
+                    if self.character_start_pos != (-1, -1) and self.num_batteries > 0:
+                        if not self.paused:
+                            model.game_map = copy.deepcopy(self.game_map)
+                            model.character_current_pos = copy.deepcopy(self.character_start_pos)
+                            model.character_start_pos = copy.deepcopy(self.character_start_pos)
+                            model.num_batteries = copy.deepcopy(self.num_batteries)
+                            model.character_current_floor = model.floor
+                            model.batteries_collected = 0
+                            model.extinguishers_collected = 0
+                            model.keys_collected = 0
+                            model.set_change_in_game_map(True)
+                        self.paused = not self.paused
+                        self.is_there_input = True
                 elif event.key == pygame.K_k:
                     view.show_controls = not view.show_controls
                 elif event.key == pygame.K_v:
@@ -404,30 +439,86 @@ class PyGameKeyboardController(object):
         if self.mb_left:
             if 8 <= mouse_pos[0] <= 528 and 8 <= mouse_pos[1] <= 56:
                 view.obj_select = (mouse_pos[0] - 8) // 48
+
+                if view.obj_select == 0:
+                    view.lvl_val = model.wall
+                if view.obj_select == 1:
+                    view.lvl_val = model.door
+                if view.obj_select == 2:
+                    view.lvl_val = model.key
+                if view.obj_select == 3:
+                    view.lvl_val = model.fire
+                if view.obj_select == 4:
+                    view.lvl_val = model.extinguisher
+                if view.obj_select == 5:
+                    view.lvl_val = model.up_arrow
+                if view.obj_select == 6:
+                    view.lvl_val = model.down_arrow
+                if view.obj_select == 7:
+                    view.lvl_val = model.left_arrow
+                if view.obj_select == 8:
+                    view.lvl_val = model.right_arrow
+                if view.obj_select == 9:
+                    view.lvl_val = model.battery
+                if view.obj_select == 10:
+                    view.lvl_val = model.character
+
+            if 64 < mouse_pos[1] < 544:
+                if view.obj_select == 9 and model.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] != model.battery:
+                    self.num_batteries += 1
+                    model.num_batteries += 1
+                if view.obj_select == 10:
+                    if model.character_start_pos != (-1, -1) and (model.character_current_pos[0] != mouse_pos[0] // 32 or model.character_current_pos[1] != (mouse_pos[1] - 64) // 32):
+                        self.game_map[model.character_current_pos[0]][model.character_current_pos[1]] = model.floor
+                        model.game_map[model.character_current_pos[0]][model.character_current_pos[1]] = model.floor
+                        model.change_in_game_map[model.character_current_pos[0]][model.character_current_pos[1]] = True
+                    self.character_start_pos = (mouse_pos[0] // 32, (mouse_pos[1] - 64) // 32)
+                    model.character_start_pos = (mouse_pos[0] // 32, (mouse_pos[1] - 64) // 32)
+                    model.character_current_pos = (mouse_pos[0] // 32, (mouse_pos[1] - 64) // 32)
+                    self.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = view.lvl_val
+                    model.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = view.lvl_val
+                if view.obj_select != 10:
+                    self.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = view.lvl_val
+                    model.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = view.lvl_val
+                model.change_in_game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = True
+
+            if 544 < mouse_pos[0] < 628 and 16 < mouse_pos[1] < 48:
+                if model.character_start_pos != (-1, -1) and model.num_batteries > 0:
+                    self.paused = False
+                    self.is_there_input = True
+
         if self.mb_right:
             if 64 < mouse_pos[1] < 544:
+                if model.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] is model.battery:
+                    self.num_batteries -= 1
+                    model.num_batteries -= 1
+                if model.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] is model.character:
+                    self.character_start_pos = (-1, -1)
+                    model.character_start_pos = (-1, -1)
+                self.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = model.floor
                 model.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = model.floor
+                model.change_in_game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = True
 
         keys = pygame.key.get_pressed()  # checking pressed keys
         original_player_input = self.player_input
         number_of_keys_pressed = 0
         if keys[pygame.K_UP]:
-            is_there_input = True
+            self.is_there_input = True
             self.player_input = 'up'
             number_of_keys_pressed += 1
             # print('up')
         if keys[pygame.K_DOWN]:
-            is_there_input = True
+            self.is_there_input = True
             self.player_input = 'down'
             number_of_keys_pressed += 1
             # print('down')
         if keys[pygame.K_LEFT]:
-            is_there_input = True
+            self.is_there_input = True
             self.player_input = 'left'
             number_of_keys_pressed += 1
             # print('left')
         if keys[pygame.K_RIGHT]:
-            is_there_input = True
+            self.is_there_input = True
             self.player_input = 'right'
             number_of_keys_pressed += 1
             # print('right')
@@ -437,7 +528,16 @@ class PyGameKeyboardController(object):
         elif number_of_keys_pressed == 0:
             self.player_input = 'nothing'
 
-        return True, is_there_input
+        return True, self.is_there_input
+
+    def floor_init(self):
+        # initialize everything to a floor tile
+        game_map = []
+        for x in range(GAME_MAP_GRID[0]):
+            game_map.append([])
+            for y in range(GAME_MAP_GRID[1]):
+                game_map[x].append(model.floor)
+        return game_map
 
 
 if __name__ == '__main__':
@@ -452,7 +552,6 @@ if __name__ == '__main__':
 
     # loop variable setup
     running = True
-    # iterations = 0
     first_update = True
 
     # display the view initially
@@ -462,8 +561,10 @@ if __name__ == '__main__':
         pygame.display.update()
 
     while running:
-
         # listen for user input
+        if controller.paused:
+            model.set_change_in_game_map(False)
+
         running, there_is_input = controller.handle_input()
 
         if controller.paused:
