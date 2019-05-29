@@ -583,7 +583,7 @@ class PyGameKeyboardController(object):
                 if self.verified and 544 < mouse_pos[0] < 628 and not self.saved:
                     self.saved = True
                     if len(sys.argv) > 1:
-                        with open('custom_levels/'+sys.argv[1] + '.csv', 'w', newline='') as level_file:
+                        with open('custom_levels/' + sys.argv[1] + '.csv', 'w', newline='') as level_file:
                             level_writer = csv.writer(level_file, delimiter=',')
                             level_writer.writerow(
                                 [self.character_start_pos[0], self.character_start_pos[1], self.num_batteries])
@@ -592,7 +592,7 @@ class PyGameKeyboardController(object):
                                     if self.save_map[x][y] != 0:
                                         level_writer.writerow([x, y, self.save_map[x][y]])
                     else:
-                        with open('custom_levels/'+model.get_name, 'w', newline='') as level_file:
+                        with open('custom_levels/' + model.get_name + '.csv', 'w', newline='') as level_file:
                             level_writer = csv.writer(level_file, delimiter=',')
                             level_writer.writerow(
                                 [self.character_start_pos[0], self.character_start_pos[1], self.num_batteries])
