@@ -1,5 +1,5 @@
 import pygame
-import time, sys, csv, copy
+import time, sys, csv, copy, os
 from pygame.locals import QUIT, KEYDOWN
 from editor_objects import *
 from editor_constants import *
@@ -69,9 +69,30 @@ class PyGameView(object):
                 elif model.character_start_pos == (-1, -1):
                     self.draw_text("NO BOT", 556, 25, 23)
             else:
-                pygame.draw.rect(self.surface, 32768, pygame.Rect(544, 16, 84, 32))
-                pygame.draw.rect(self.surface, 65280, pygame.Rect(546, 18, 80, 28))
-                self.draw_text("PLAY", 568, 25, 23)
+                if not controller.verified:
+                    pygame.draw.rect(self.surface, 32768, pygame.Rect(544, 16, 84, 32))
+                    pygame.draw.rect(self.surface, 65280, pygame.Rect(546, 18, 80, 28))
+                    self.draw_text("PLAY", 567, 25, 23)
+                else:
+                    pygame.draw.rect(self.surface, 32768, pygame.Rect(544, 16, 84, 32))
+                    self.draw_text("SOLVED", 557, 25, 23)
+
+            pygame.draw.rect(self.surface, pygame.Color(128, 0, 0, 255), pygame.Rect(8, 560, 84, 32))
+            pygame.draw.rect(self.surface, pygame.Color(255, 0, 0, 255), pygame.Rect(10, 562, 80, 28))
+            self.draw_text("CLEAR", 23, 569, 23)
+
+            if controller.verified:
+                pygame.draw.rect(self.surface, 32768, pygame.Rect(544, 560, 84, 32))
+                pygame.draw.rect(self.surface, 65280, pygame.Rect(546, 562, 80, 28))
+                self.draw_text("SAVE", 567, 569, 23)
+            else:
+                pygame.draw.rect(self.surface, 4210752, pygame.Rect(544, 560, 84, 32))
+                pygame.draw.rect(self.surface, 8421504, pygame.Rect(546, 562, 80, 28))
+                self.draw_text("SOLVE", 562, 569, 23)
+
+            if controller.saved:
+                pygame.draw.rect(self.surface, 32768, pygame.Rect(544, 560, 84, 32))
+                self.draw_text("SAVED", 562, 569, 23)
 
         self.draw_game_map()
 
@@ -138,7 +159,10 @@ class Model(object):
         if self.batteries_collected == self.num_batteries or self.maze_reset:
             if self.batteries_collected == self.num_batteries:
                 controller.paused = True
-            self.game_map = copy.deepcopy(controller.game_map)
+                controller.verified = True
+            for x in range(len(controller.game_map)):
+                for y in range(len(controller.game_map[x])):
+                    self.game_map[x][y] = controller.game_map[x][y]
             self.character_current_pos = copy.deepcopy(controller.character_start_pos)
             self.character_start_pos = copy.deepcopy(controller.character_start_pos)
             self.num_batteries = copy.deepcopy(controller.num_batteries)
@@ -259,7 +283,6 @@ class Model(object):
     def load_maze(self):
 
         game_map = self.floor_init()
-
         with open('custom_levels/' + str(sys.argv[1]), 'r') as File:
             read = csv.reader(File, delimiter=',')
             for r, row in enumerate(read):
@@ -296,6 +319,7 @@ class Model(object):
                     if row[2] == 11:
                         game_map[row[0]][row[1]] = self.up_arrow
 
+        pygame.display.set_caption('Puzzle Game Level Editor - Editing '+str(sys.argv[1]))
         self.game_map = game_map
 
     def get_next_maze(self):
@@ -324,6 +348,8 @@ class Model(object):
             self.character_start_pos = (-1, -1)
             self.character_current_pos = (-1, -1)
             self.character_current_floor = self.floor
+            self.get_name = str(len(os.listdir(os.getcwd()+'/custom_levels'))+1) + '.csv'
+            pygame.display.set_caption('Puzzle Game Level Editor - Creating new level: ' + self.get_name)
 
         self.batteries_collected = 0
         self.extinguishers_collected = 0
@@ -387,6 +413,10 @@ class PyGameKeyboardController(object):
         self.num_batteries = 0
         self.character_start_pos = (-1, -1)
         self.is_there_input = False
+        self.verified = False
+        self.saved = False
+        self.save_map = []
+        self.save_val = 2
 
     def handle_input(self):
 
@@ -394,6 +424,35 @@ class PyGameKeyboardController(object):
 
         if self.first:
             self.game_map = self.floor_init()
+            self.character_start_pos = model.character_start_pos
+            self.num_batteries = model.num_batteries
+            for x in range(len(self.game_map)):
+                self.save_map.append([])
+                for y in range(len(self.game_map[x])):
+                    self.game_map[x][y] = model.game_map[x][y]
+                    self.save_map[x].append(0)
+                    if self.game_map[x][y] == model.wall:
+                        self.save_map[x][y] = 2
+                    if self.game_map[x][y] == model.door:
+                        self.save_map[x][y] = 4
+                    if self.game_map[x][y] == model.key:
+                        self.save_map[x][y] = 5
+                    if self.game_map[x][y] == model.fire:
+                        self.save_map[x][y] = 7
+                    if self.game_map[x][y] == model.extinguisher:
+                        self.save_map[x][y] = 6
+                    if self.game_map[x][y] == model.up_arrow:
+                        self.save_map[x][y] = 11
+                    if self.game_map[x][y] == model.down_arrow:
+                        self.save_map[x][y] = 10
+                    if self.game_map[x][y] == model.left_arrow:
+                        self.save_map[x][y] = 9
+                    if self.game_map[x][y] == model.right_arrow:
+                        self.save_map[x][y] = 8
+                    if self.game_map[x][y] == model.battery:
+                        self.save_map[x][y] = 3
+                    if self.game_map[x][y] == model.character:
+                        self.save_map[x][y] = 1
             self.first = False
 
         for event in pygame.event.get():
@@ -419,7 +478,9 @@ class PyGameKeyboardController(object):
                 elif event.key == pygame.K_SPACE:
                     if self.character_start_pos != (-1, -1) and self.num_batteries > 0:
                         if not self.paused:
-                            model.game_map = copy.deepcopy(self.game_map)
+                            for x in range(len(self.game_map)):
+                                for y in range(len(self.game_map[x])):
+                                    model.game_map[x][y] = self.game_map[x][y]
                             model.character_current_pos = copy.deepcopy(self.character_start_pos)
                             model.character_start_pos = copy.deepcopy(self.character_start_pos)
                             model.num_batteries = copy.deepcopy(self.num_batteries)
@@ -442,43 +503,59 @@ class PyGameKeyboardController(object):
 
                 if view.obj_select == 0:
                     view.lvl_val = model.wall
+                    self.save_val = 2
                 if view.obj_select == 1:
                     view.lvl_val = model.door
+                    self.save_val = 4
                 if view.obj_select == 2:
                     view.lvl_val = model.key
+                    self.save_val = 5
                 if view.obj_select == 3:
                     view.lvl_val = model.fire
+                    self.save_val = 7
                 if view.obj_select == 4:
                     view.lvl_val = model.extinguisher
+                    self.save_val = 6
                 if view.obj_select == 5:
                     view.lvl_val = model.up_arrow
+                    self.save_val = 11
                 if view.obj_select == 6:
                     view.lvl_val = model.down_arrow
+                    self.save_val = 10
                 if view.obj_select == 7:
                     view.lvl_val = model.left_arrow
+                    self.save_val = 9
                 if view.obj_select == 8:
                     view.lvl_val = model.right_arrow
+                    self.save_val = 8
                 if view.obj_select == 9:
                     view.lvl_val = model.battery
+                    self.save_val = 3
                 if view.obj_select == 10:
                     view.lvl_val = model.character
+                    self.save_val = 1
 
             if 64 < mouse_pos[1] < 544:
+                self.saved = False
+                self.verified = False
                 if view.obj_select == 9 and model.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] != model.battery:
                     self.num_batteries += 1
                     model.num_batteries += 1
                 if view.obj_select == 10:
                     if model.character_start_pos != (-1, -1) and (model.character_current_pos[0] != mouse_pos[0] // 32 or model.character_current_pos[1] != (mouse_pos[1] - 64) // 32):
                         self.game_map[model.character_current_pos[0]][model.character_current_pos[1]] = model.floor
+                        self.save_map[model.character_current_pos[0]][model.character_current_pos[1]] = 0
                         model.game_map[model.character_current_pos[0]][model.character_current_pos[1]] = model.floor
                         model.change_in_game_map[model.character_current_pos[0]][model.character_current_pos[1]] = True
                     self.character_start_pos = (mouse_pos[0] // 32, (mouse_pos[1] - 64) // 32)
                     model.character_start_pos = (mouse_pos[0] // 32, (mouse_pos[1] - 64) // 32)
                     model.character_current_pos = (mouse_pos[0] // 32, (mouse_pos[1] - 64) // 32)
                     self.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = view.lvl_val
+                    self.save_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = self.save_val
                     model.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = view.lvl_val
                 if view.obj_select != 10:
                     self.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = view.lvl_val
+                    self.save_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = self.save_val
                     model.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = view.lvl_val
                 model.change_in_game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = True
 
@@ -487,8 +564,47 @@ class PyGameKeyboardController(object):
                     self.paused = False
                     self.is_there_input = True
 
+            if 560 < mouse_pos[1] < 592:
+                if 8 < mouse_pos[0] < 92:
+                    self.game_map = self.floor_init()
+                    model.game_map = model.floor_init()
+                    for x in range(len(self.game_map)):
+                        for y in range(len(self.game_map[x])):
+                            self.save_map[x][y] = 0
+                    self.is_there_input = True
+                    model.set_change_in_game_map(True)
+                    self.saved = False
+                    self.verified = False
+                    self.num_batteries = 0
+                    model.num_batteries = 0
+                    self.character_start_pos = (-1, -1)
+                    model.character_start_pos = (-1, -1)
+
+                if self.verified and 544 < mouse_pos[0] < 628 and not self.saved:
+                    self.saved = True
+                    if len(sys.argv) > 1:
+                        with open('custom_levels/'+sys.argv[1], 'w', newline='') as level_file:
+                            level_writer = csv.writer(level_file, delimiter=',')
+                            level_writer.writerow(
+                                [self.character_start_pos[0], self.character_start_pos[1], self.num_batteries])
+                            for x in range(len(self.save_map)):
+                                for y in range(len(self.save_map[x])):
+                                    if self.save_map[x][y] != 0:
+                                        level_writer.writerow([x, y, self.save_map[x][y]])
+                    else:
+                        with open('custom_levels/'+model.get_name, 'w', newline='') as level_file:
+                            level_writer = csv.writer(level_file, delimiter=',')
+                            level_writer.writerow(
+                                [self.character_start_pos[0], self.character_start_pos[1], self.num_batteries])
+                            for x in range(len(self.save_map)):
+                                for y in range(len(self.save_map[x])):
+                                    if self.save_map[x][y] != 0:
+                                        level_writer.writerow([x, y, self.save_map[x][y]])
+
         if self.mb_right:
             if 64 < mouse_pos[1] < 544:
+                self.saved = False
+                self.verified = False
                 if model.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] is model.battery:
                     self.num_batteries -= 1
                     model.num_batteries -= 1
@@ -496,6 +612,7 @@ class PyGameKeyboardController(object):
                     self.character_start_pos = (-1, -1)
                     model.character_start_pos = (-1, -1)
                 self.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = model.floor
+                self.save_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = 0
                 model.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = model.floor
                 model.change_in_game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = True
 
