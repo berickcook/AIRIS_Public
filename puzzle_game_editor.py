@@ -3,8 +3,6 @@ import time, sys, csv, copy, os
 from pygame.locals import QUIT, KEYDOWN
 from editor_objects import *
 from editor_constants import *
-from other_useful_functions import pprint
-
 
 class PyGameView(object):
     '''
@@ -16,9 +14,6 @@ class PyGameView(object):
         self.model = model
         self.screen = pygame.display.set_mode(GAME_SCREEN_SIZE) # a pygame screen
         self.surface = pygame.Surface(GAME_SCREEN_SIZE) # a pygame surface is the thing you draw on
-
-        self.show_view = True # toggle display
-        self.show_controls = False # toggle control display
 
         self.obj_select = 0
         self.lvl_val = model.wall
@@ -64,10 +59,11 @@ class PyGameView(object):
             if model.character_start_pos == (-1, -1) or model.num_batteries == 0:
                 pygame.draw.rect(self.surface, 4210752, pygame.Rect(544, 16, 84, 32))
                 pygame.draw.rect(self.surface, 8421504, pygame.Rect(546, 18, 80, 28))
-                if model.num_batteries == 0:
-                    self.draw_text("NO BATTS", 548, 25, 23)
-                elif model.character_start_pos == (-1, -1):
+                if model.character_start_pos == (-1, -1):
                     self.draw_text("NO BOT", 556, 25, 23)
+                elif model.num_batteries == 0:
+                    self.draw_text("NO BATTS", 548, 25, 23)
+
             else:
                 if not controller.verified:
                     pygame.draw.rect(self.surface, 32768, pygame.Rect(544, 16, 84, 32))
@@ -88,11 +84,20 @@ class PyGameView(object):
             else:
                 pygame.draw.rect(self.surface, 4210752, pygame.Rect(544, 560, 84, 32))
                 pygame.draw.rect(self.surface, 8421504, pygame.Rect(546, 562, 80, 28))
-                self.draw_text("SOLVE", 562, 569, 23)
+                self.draw_text("SAVE", 567, 569, 23)
 
             if controller.saved:
                 pygame.draw.rect(self.surface, 32768, pygame.Rect(544, 560, 84, 32))
                 self.draw_text("SAVED", 562, 569, 23)
+
+            self.draw_text("LMB: SELECT / PLACE OBJECT | RMB: DELETE OBJECT", 128, 552, 20)
+            self.draw_text("LEVEL MUST HAVE A BOT AND AT LEAST ONE BATTERY", 128, 569, 20)
+            self.draw_text("PLAY AND SOLVE LEVEL TO UNLOCK SAVE", 128, 586, 20)
+
+        else:
+            pygame.draw.rect(self.surface, pygame.Color(128, 0, 0, 255), pygame.Rect(8, 16, 624, 32))
+            pygame.draw.rect(self.surface, pygame.Color(255, 0, 0, 255), pygame.Rect(10, 18, 620, 28))
+            self.draw_text("CLICK HERE OR PRESS SPACE TO RETURN TO THE EDITOR", 100, 25, 23)
 
         self.draw_game_map()
 
@@ -111,7 +116,7 @@ class PyGameView(object):
                 if self.model.change_in_game_map[x][y]:
                    self.model.game_map[x][y].draw_game_image(self, x, y)
 
-    def draw_text(self, text, x, y, size, color = (0, 0, 0)):
+    def draw_text(self, text, x, y, size, color=(0, 0, 0)):
         basicfont = pygame.font.SysFont(None, size)
         text_render = basicfont.render(
             text, False, color)
@@ -172,21 +177,23 @@ class Model(object):
             self.keys_collected = 0
             self.set_change_in_game_map(True)
             controller.is_there_input = True
+            self.maze_reset = False
 
     def get_action(self):
         return self.controller.player_input
 
     # these functions controls game logic
     def game_logic(self, player_input):
+        character_new_pos = self.character_current_pos
 
         if player_input != 'nothing':
-            if player_input == 'up':
+            if player_input == 'up' and self.character_current_pos[1] > 0:
                 character_new_pos = (self.character_current_pos[0], self.character_current_pos[1] - 1)
-            if player_input == 'down':
+            if player_input == 'down' and self.character_current_pos[1] < 14:
                 character_new_pos = (self.character_current_pos[0], self.character_current_pos[1] + 1)
-            if player_input == 'left':
+            if player_input == 'left' and self.character_current_pos[0] > 0:
                 character_new_pos = (self.character_current_pos[0] - 1, self.character_current_pos[1])
-            if player_input == 'right':
+            if player_input == 'right' and self.character_current_pos[0] < 19:
                 character_new_pos = (self.character_current_pos[0] + 1, self.character_current_pos[1])
 
             new_tile = self.game_map[character_new_pos[0]][character_new_pos[1]]
@@ -275,7 +282,6 @@ class Model(object):
         self.character_current_floor = self.floor
 
     def reset_maze(self):
-        self.current_maze -= 1
         self.maze_reset = True
         # self.update()
 
@@ -283,7 +289,7 @@ class Model(object):
     def load_maze(self):
 
         game_map = self.floor_init()
-        with open('custom_levels/' + str(sys.argv[1]), 'r') as File:
+        with open('custom_levels/' + str(sys.argv[1]) + '.csv', 'r') as File:
             read = csv.reader(File, delimiter=',')
             for r, row in enumerate(read):
                 row[0] = int(row[0])
@@ -319,7 +325,7 @@ class Model(object):
                     if row[2] == 11:
                         game_map[row[0]][row[1]] = self.up_arrow
 
-        pygame.display.set_caption('Puzzle Game Level Editor - Editing '+str(sys.argv[1]))
+        pygame.display.set_caption('Puzzle Game Level Editor - Editing Level custom_levels/'+str(sys.argv[1]))
         self.game_map = game_map
 
     def get_next_maze(self):
@@ -332,15 +338,9 @@ class Model(object):
             self.load_maze()
 
         except FileNotFoundError:
-            self.current_maze = 1
-            try:
-                self.load_maze()
-            except FileNotFoundError:
-                print('ERROR: No levels to load!')
-                print('Use the included level editor to create levels and place them in /custom_levels')
-                print('They must be named 1.csv, 2.csv, 3.csv, ...')
-                interrupt = input()
-                raise Exception
+            print('ERROR: custom_levels/'+str(sys.argv[1])+'.csv does not exist!')
+            print('Remove or change command line argument "'+str(sys.argv[1])+'" and run again.')
+            sys.exit()
 
         except IndexError:
             self.game_map = self.floor_init()
@@ -348,8 +348,8 @@ class Model(object):
             self.character_start_pos = (-1, -1)
             self.character_current_pos = (-1, -1)
             self.character_current_floor = self.floor
-            self.get_name = str(len(os.listdir(os.getcwd()+'/custom_levels'))+1) + '.csv'
-            pygame.display.set_caption('Puzzle Game Level Editor - Creating new level: ' + self.get_name)
+            self.get_name = str(len(os.listdir(os.getcwd()+'/custom_levels'))+1)
+            pygame.display.set_caption('Puzzle Game Level Editor - Creating new level: custom_levels/' + self.get_name)
 
         self.batteries_collected = 0
         self.extinguishers_collected = 0
@@ -491,10 +491,6 @@ class PyGameKeyboardController(object):
                             model.set_change_in_game_map(True)
                         self.paused = not self.paused
                         self.is_there_input = True
-                elif event.key == pygame.K_k:
-                    view.show_controls = not view.show_controls
-                elif event.key == pygame.K_v:
-                    view.show_view = not view.show_view
 
         mouse_pos = pygame.mouse.get_pos()
         if self.mb_left:
@@ -557,6 +553,10 @@ class PyGameKeyboardController(object):
                     self.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = view.lvl_val
                     self.save_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = self.save_val
                     model.game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = view.lvl_val
+                    if self.character_start_pos == (mouse_pos[0] // 32, (mouse_pos[1] - 64) // 32):
+                        self.character_start_pos = (-1, -1)
+                        model.character_start_pos = (-1, -1)
+                        model.character_current_pos = (-1, -1)
                 model.change_in_game_map[mouse_pos[0] // 32][(mouse_pos[1] - 64) // 32] = True
 
             if 544 < mouse_pos[0] < 628 and 16 < mouse_pos[1] < 48:
@@ -583,7 +583,7 @@ class PyGameKeyboardController(object):
                 if self.verified and 544 < mouse_pos[0] < 628 and not self.saved:
                     self.saved = True
                     if len(sys.argv) > 1:
-                        with open('custom_levels/'+sys.argv[1], 'w', newline='') as level_file:
+                        with open('custom_levels/'+sys.argv[1] + '.csv', 'w', newline='') as level_file:
                             level_writer = csv.writer(level_file, delimiter=',')
                             level_writer.writerow(
                                 [self.character_start_pos[0], self.character_start_pos[1], self.num_batteries])
@@ -664,18 +664,16 @@ if __name__ == '__main__':
     pygame.display.set_caption('Puzzle Game Level Editor')
     controller = PyGameKeyboardController()
     model = Model(controller)
-    if GAME_SHOW_SCREEN:
-        view = PyGameView(model)
+    view = PyGameView(model)
 
     # loop variable setup
     running = True
     first_update = True
 
     # display the view initially
-    if GAME_SHOW_SCREEN and view.show_view:
-        view.draw()
-        view.screen.blit(view.surface, (0,0))
-        pygame.display.update()
+    view.draw()
+    view.screen.blit(view.surface, (0,0))
+    pygame.display.update()
 
     while running:
         # listen for user input
@@ -685,10 +683,9 @@ if __name__ == '__main__':
         running, there_is_input = controller.handle_input()
 
         if controller.paused:
-            if GAME_SHOW_SCREEN and view.show_view:
-                view.draw()
-                view.screen.blit(view.surface, (0,0))
-                pygame.display.update()
+            view.draw()
+            view.screen.blit(view.surface, (0,0))
+            pygame.display.update()
 
         else:
             if there_is_input or first_update:
@@ -697,10 +694,9 @@ if __name__ == '__main__':
                 model.update()
 
                 # display the view
-                if GAME_SHOW_SCREEN and view.show_view:
-                    view.draw()
-                    view.screen.blit(view.surface, (0,0))
-                    pygame.display.update()
+                view.draw()
+                view.screen.blit(view.surface, (0,0))
+                pygame.display.update()
 
                 # reset user input
                 controller.player_input = 'nothing'
@@ -709,17 +705,10 @@ if __name__ == '__main__':
                 if model.batteries_collected == model.num_batteries or model.maze_reset:
                     model.update()
                     # display the view
-                    if GAME_SHOW_SCREEN and view.show_view:
-                        view.draw()
-                        view.screen.blit(view.surface, (0,0))
-                        pygame.display.update()
-                    # THIS ONLY WORKS BECAUSE WHEN MODEL.UPDATE
-                    # IS CALLED, WINNING OR DEATH WILL BE TRUE
-                    # AND THE RETURN STATEMENT WILL KEEP THE
-                    # REST OF A NORMAL UPDATE FROM HAPPENING
-                    # therefore this is just a way to automatically
-                    # load the next level or reload the current level
-                    # on win or death without having to click anything
+                    view.draw()
+                    view.screen.blit(view.surface, (0,0))
+                    pygame.display.update()
+
             time.sleep(0.10)  # control frame rate (in seconds)
 
     pygame.quit()

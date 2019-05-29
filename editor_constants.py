@@ -1,7 +1,6 @@
 
 ############ PUZZLE GAME EDITOR #################
 
-GAME_SHOW_SCREEN = True
 GAME_SCREEN_SIZE = (640, 608)
 
 #MAP_SIZE = (640, 480) # original
