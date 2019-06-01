@@ -68,6 +68,7 @@ class AIRIS(object):
         }
         self.goal_condition = None
         self.goal_value = None
+        self.goal_reached = False
 
         # lists of visual and auxiliary changes in the env from prior to posterior
         self.vis_change_list = []
@@ -397,9 +398,10 @@ class AIRIS(object):
             self.prior_aux_env = np.array(aux_env, dtype=np.float32)
             print_vis_env(self.prior_vis_env, title='self.prior_vis_env:', num_indents=num_indents + 2)
             print_aux_env(self.prior_aux_env, title='self.prior_aux_env:', num_indents=num_indents + 2)
+            self.goal_reached = False
 
             # if its not made a plan yet
-            while not self.action_plan:
+            while not self.action_plan and not self.goal_reached:
                 pprint('no plan has been made yet',
                     num_indents=num_indents + 1, new_line_start=True)
                 pprint('self.action_plan:\t%s' % self.action_plan,
@@ -426,31 +428,37 @@ class AIRIS(object):
                 self.make_plan(action, num_indents=num_indents + 3)
                 self.display_hold = True
 
-            # get the action at the end of the list
-            if self.store_worst_index != None and len(self.action_plan) == 1:
-                pprint('Adding to worst set: '+str(self.store_worst),
+            if self.action_plan:
+                # get the action at the end of the list
+                if self.store_worst_index != None and len(self.action_plan) == 1:
+                    pprint('Adding to worst set: '+str(self.store_worst),
+                        num_indents=num_indents + 1, new_line_start=True)
+                    self.worst_set.add(self.store_worst)
+
+                if self.goal_type == 'Observe':
+                    print('Observed: ',self.action_plan)
+
+                self.display_plan = [0]
+                hold_plan = copy.deepcopy(self.action_plan)
+                while hold_plan:
+                    self.display_plan.append(hold_plan.pop()[2])
+
+                pprint('popping the next action/output off the end of the plan ...',
                     num_indents=num_indents + 1, new_line_start=True)
-                self.worst_set.add(self.store_worst)
+                action, output, predicted_model_index = self.action_plan.pop()
 
-            if self.goal_type == 'Observe':
-                print('Observed: ',self.action_plan)
+                self.current_model_index = predicted_model_index
 
-            self.display_plan = [0]
-            hold_plan = copy.deepcopy(self.action_plan)
-            while hold_plan:
-                self.display_plan.append(hold_plan.pop()[2])
+                pprint('(action, output, predicted_model_index) = (%s, %s, %s)'
+                    % (action, output, predicted_model_index),
+                    num_indents=num_indents + 1)
 
-            pprint('popping the next action/output off the end of the plan ...',
-                num_indents=num_indents + 1, new_line_start=True)
-            action, output, predicted_model_index = self.action_plan.pop()
+                pprint('do the action in the game', num_indents=1, new_line_start=True)
 
-            self.current_model_index = predicted_model_index
+            else:
+                action = None
+                pprint('No action needs to be taken', num_indents=1, new_line_start=True)
 
-            pprint('(action, output, predicted_model_index) = (%s, %s, %s)'
-                % (action, output, predicted_model_index),
-                num_indents=num_indents + 1)
-
-            pprint('do the action in the game', num_indents=1, new_line_start=True)
             pprint('input captured. duration: %s' % (datetime.now() - start_time),
                 new_line_start=True, draw_line=True)
 
@@ -705,6 +713,8 @@ class AIRIS(object):
                 else:
                     if model.focus_value_is_aux:
                         self.goal_condition = random.choice(self.knowledge[path + '/A' + str(model.focus_value)])
+                        model.focus_index = 2
+                        #model.focus_index = self.knowledge[path + '/A' + str(model.focus_value) + '/' + str(self.goal_condition) + '/focus_i']
                 self.print_goal_condition(num_indents=4)
                 self.goal_type = self.goal_type_default
 
@@ -768,6 +778,7 @@ class AIRIS(object):
                 }
                 self.goal_value = val if self.goal_type == 'Fixed' else \
                     random.sample(self.aux_global_set, 1)[0]
+                self.goal_value = 0.0
                 goal_found = True
                 pprint('knowledge found, goal_source set to:', num_indents=num_indents + 2)
                 self.print_goal_source(num_indents=num_indents + 3)
@@ -794,6 +805,8 @@ class AIRIS(object):
         worst_condition = []
         new_condition = []
 
+        pprint('GOALVALUE '+str(self.goal_value), num_indents=num_indents+1)
+
         if self.goal_type == 'Random' and self.goal_value != None:
 
             # set the current model's compare field
@@ -814,24 +827,27 @@ class AIRIS(object):
             # flag if we've reached the goal
             print('Current Goal: ')
             print(self.goal_source,'where value =',self.goal_value)
-            goal_reached = False
+            self.goal_reached = False
             print('Initial focus value', model.focus_value)
             print('Initial Compare: ', model.compare)
             if model.compare == 0:
-                self.predict(self.goal_action, self.goal_output, num_indents=num_indents + 1)
-                self.action_plan.append((self.goal_action, self.goal_output, self.current_model_index))
-                goal_reached = True
+                if not model.focus_value_is_aux:
+                    self.predict(self.goal_action, self.goal_output, num_indents=num_indents + 1)
+                    self.action_plan.append((self.goal_action, self.goal_output, self.current_model_index))
+                self.goal_reached = True
 
             if model.compare == 999999:
-                goal_reached = True
+                self.goal_reached = True
 
-            while not goal_reached and base_model_heap and plan_depth <= self.action_plan_depth_limit:
+            pprint('MODELCOMPARE '+str(model.compare), num_indents=num_indents + 1)
+
+            while not self.goal_reached and base_model_heap and plan_depth <= self.action_plan_depth_limit:
 
                 base_model = heapq.heappop(base_model_heap)[1]
                 plan_depth += 1
                 pprint (str(plan_depth) + ' / ' + str(self.action_plan_depth_limit), num_indents=num_indents + 1)
                 for action_index, try_action in enumerate(self.action_space):
-                    if not goal_reached:
+                    if not self.goal_reached:
                         for try_output in range(self.action_output_list[action_index][0], self.action_output_list[action_index][1], self.action_output_list[action_index][2]):
                             self.current_model_index = base_model
                             model = self.models[self.current_model_index]
@@ -857,21 +873,32 @@ class AIRIS(object):
                                     heapq.heappush(base_model_heap, (model.compare + model.depth, self.current_model_index))
                                     model_set.add(model_env)
                                 if model.compare == 0:
-                                    pprint('model compare Exception', num_indents=num_indents + 1)
-                                    self.predict(self.goal_action,self.goal_output, num_indents=num_indents + 1)
-                                    if model.best_condition_id:
+                                    if not model.focus_value_is_aux:
+                                        pprint('model compare Exception', num_indents=num_indents + 1)
+                                        self.predict(self.goal_action,self.goal_output, num_indents=num_indents + 1)
+                                        if model.best_condition_id:
+                                            source = self.current_model_index
+                                            model = self.models[source]
+                                        else:
+                                            source = self.models[self.current_model_index].previous_model_index
+                                            self.action_plan.append((self.goal_action, self.goal_output, source))
+                                            model = self.models[source]
+                                        while model.previous_model_index != None:
+                                            self.action_plan.append((model.previous_action, model.previous_output, source))
+                                            source = model.previous_model_index
+                                            model = self.models[source]  # model.previous is an index
+                                        self.goal_reached = True
+                                        break
+                                    else:
+                                        pprint('model compare AUX Exception', num_indents=num_indents + 1)
                                         source = self.current_model_index
                                         model = self.models[source]
-                                    else:
-                                        source = self.models[self.current_model_index].previous_model_index
-                                        self.action_plan.append((self.goal_action, self.goal_output, source))
-                                        model = self.models[source]
-                                    while model.previous_model_index != None:
-                                        self.action_plan.append((model.previous_action, model.previous_output, source))
-                                        source = model.previous_model_index
-                                        model = self.models[source]  # model.previous is an index
-                                    goal_reached = True
-                                    break
+                                        while model.previous_model_index != None:
+                                            self.action_plan.append((model.previous_action, model.previous_output, source))
+                                            source = model.previous_model_index
+                                            model = self.models[source]  # model.previous is an index
+                                        self.goal_reached = True
+                                        break
                             elif model.best_condition_id == None:  # if we don't have knowledge of this try_action
                                 source = self.models[self.current_model_index].previous_model_index
                                 new_condition.append((999999, self.current_model_index, None, self.models[source].compare , try_action, try_output, 999999, self.models[source].focus_value, self.current_model_index))
@@ -880,7 +907,7 @@ class AIRIS(object):
                         break
 
             # if no successful plan can be found, make a plan to try the least accurate prediction
-            if (plan_depth > self.action_plan_depth_limit or not self.action_plan) and not goal_reached:
+            if (plan_depth > self.action_plan_depth_limit or not self.action_plan) and not self.goal_reached:
                 if model.compare != 0:
                     print('Insufficient knowledge to achieve: ')
                     print(self.goal_source,'where value =',self.goal_value)
@@ -1013,153 +1040,157 @@ class AIRIS(object):
         vis_env = copy.deepcopy(model.vis_env)
 
         fv = model.focus_value
-        try:
-            if model.vis_count[fv]:
-                for fx, fy in model.vis_count_pos[fv]:
-                    gx, gy = fx + self.goal_source['x'], fy + self.goal_source['y']
-                    pprint('gx, gy: '+str(gx)+','+str(gy), num_indents=num_indents)
-                    if not 0 <= gx < len(vis_env) or not 0 <= gy < len(vis_env[0]):
-                        compare = 999999
 
-                    # edges of the vis_env
-                    vis_top = len(vis_env[0]) - 1
-                    vis_bottom = 0
-                    vis_left = 0
-                    vis_right = len(vis_env) - 1
+        if not model.focus_value_is_aux:
+            try:
+                if model.vis_count[fv]:
+                    for fx, fy in model.vis_count_pos[fv]:
+                        gx, gy = fx + self.goal_source['x'], fy + self.goal_source['y']
+                        pprint('gx, gy: '+str(gx)+','+str(gy), num_indents=num_indents)
+                        if not 0 <= gx < len(vis_env) or not 0 <= gy < len(vis_env[0]):
+                            compare = 999999
 
-                    # max_d = maximum distance from the focus value to an edge of the vis_env
-                    # max_d is used so the search terminates when the whole vis_env has been searched
-                    max_d = max([
-                        abs(vis_top - gy),
-                        abs(vis_bottom - gy),
-                        abs(vis_left - gx),
-                        abs(vis_right - gx)
-                    ])
+                        # edges of the vis_env
+                        vis_top = len(vis_env[0]) - 1
+                        vis_bottom = 0
+                        vis_left = 0
+                        vis_right = len(vis_env) - 1
 
-                    def next_search_border(env, cx, cy, d):
+                        # max_d = maximum distance from the focus value to an edge of the vis_env
+                        # max_d is used so the search terminates when the whole vis_env has been searched
+                        max_d = max([
+                            abs(vis_top - gy),
+                            abs(vis_bottom - gy),
+                            abs(vis_left - gx),
+                            abs(vis_right - gx)
+                        ])
 
-                        # next_search_border returns a list of tuples:
-                        # [(value, (x, y)), ...]
-                        # where each tuple provides the value and position
-                        # of inputs in the env for the inputs of that env
-                        # that form a square border around the center (cx, cy).
-                        # d is the number of inputs from the focus value
-                        # to the center of any of the border's edges.
+                        def next_search_border(env, cx, cy, d):
 
-                        def get_edge(env, inbounds,
-                                    start_x, end_x, only_x,
-                                    start_y, end_y, only_y,
-                                    horizontal=False,
-                                    vertical=False):
+                            # next_search_border returns a list of tuples:
+                            # [(value, (x, y)), ...]
+                            # where each tuple provides the value and position
+                            # of inputs in the env for the inputs of that env
+                            # that form a square border around the center (cx, cy).
+                            # d is the number of inputs from the focus value
+                            # to the center of any of the border's edges.
 
-                            # get_edge returns a list of tuples for the top
-                            # bottom, left, or right edge of the border (inclusive)
-                            # If the edge is completely outside the env, [] is returned.
-                            # If part of the edge is outside the env, those parts outside
-                            # are excluded from the list returned. If the whole edge is
-                            # inside the env, the whole edge is returned.
+                            def get_edge(env, inbounds,
+                                        start_x, end_x, only_x,
+                                        start_y, end_y, only_y,
+                                        horizontal=False,
+                                        vertical=False):
 
-                            return list(map(
-                                lambda x, y: (env[x][y], (x, y)),
-                                list(range(start_x, end_x + 1)) if horizontal else [only_x] * (end_y - start_y + 1),
-                                list(range(start_y, end_y + 1)) if vertical else [only_y] * (end_x - start_x + 1)
-                            )) if inbounds else []
+                                # get_edge returns a list of tuples for the top
+                                # bottom, left, or right edge of the border (inclusive)
+                                # If the edge is completely outside the env, [] is returned.
+                                # If part of the edge is outside the env, those parts outside
+                                # are excluded from the list returned. If the whole edge is
+                                # inside the env, the whole edge is returned.
 
-                        # edges of the square search border positions
-                        sqr_top = cy + d
-                        sqr_bottom = cy - d
-                        sqr_left = cx - d
-                        sqr_right = cx + d
+                                return list(map(
+                                    lambda x, y: (env[x][y], (x, y)),
+                                    list(range(start_x, end_x + 1)) if horizontal else [only_x] * (end_y - start_y + 1),
+                                    list(range(start_y, end_y + 1)) if vertical else [only_y] * (end_x - start_x + 1)
+                                )) if inbounds else []
 
-                        # lists of values and positions of each edge of the border
-                        top_row = get_edge(
-                            env, sqr_top <= vis_top,
-                            sqr_left if sqr_left > vis_left else vis_left,
-                            sqr_right if sqr_right < vis_right else vis_right, None,
-                            None, None, sqr_top,
-                            horizontal=True)
-                        bottom_row = get_edge(
-                            env, sqr_bottom >= vis_bottom,
-                            sqr_left if sqr_left > vis_left else vis_left,
-                            sqr_right if sqr_right < vis_right else vis_right, None,
-                            None, None, sqr_bottom,
-                            horizontal=True)
-                        left_row = get_edge(
-                            env, sqr_left >= vis_left,
-                            None, None, sqr_left,
-                            sqr_bottom if sqr_bottom > vis_bottom else vis_bottom,
-                            sqr_top if sqr_top < vis_top else vis_top, None,
-                            vertical=True)
-                        right_row = get_edge(
-                            env, sqr_right <= vis_right,
-                            None, None, sqr_right,
-                            sqr_bottom if sqr_bottom > vis_bottom else vis_bottom,
-                            sqr_top if sqr_top < vis_top else vis_top, None,
-                            vertical=True)
+                            # edges of the square search border positions
+                            sqr_top = cy + d
+                            sqr_bottom = cy - d
+                            sqr_left = cx - d
+                            sqr_right = cx + d
 
-                        # set is used to remove duplicates
-                        return set(top_row + bottom_row + left_row + right_row)
+                            # lists of values and positions of each edge of the border
+                            top_row = get_edge(
+                                env, sqr_top <= vis_top,
+                                sqr_left if sqr_left > vis_left else vis_left,
+                                sqr_right if sqr_right < vis_right else vis_right, None,
+                                None, None, sqr_top,
+                                horizontal=True)
+                            bottom_row = get_edge(
+                                env, sqr_bottom >= vis_bottom,
+                                sqr_left if sqr_left > vis_left else vis_left,
+                                sqr_right if sqr_right < vis_right else vis_right, None,
+                                None, None, sqr_bottom,
+                                horizontal=True)
+                            left_row = get_edge(
+                                env, sqr_left >= vis_left,
+                                None, None, sqr_left,
+                                sqr_bottom if sqr_bottom > vis_bottom else vis_bottom,
+                                sqr_top if sqr_top < vis_top else vis_top, None,
+                                vertical=True)
+                            right_row = get_edge(
+                                env, sqr_right <= vis_right,
+                                None, None, sqr_right,
+                                sqr_bottom if sqr_bottom > vis_bottom else vis_bottom,
+                                sqr_top if sqr_top < vis_top else vis_top, None,
+                                vertical=True)
 
-                    if 0 <= gx < len(vis_env) and 0 <= gy < len(vis_env[0]):
-                        if vis_env[gx][gy] == self.goal_value:
-                            best_compare = 0
+                            # set is used to remove duplicates
+                            return set(top_row + bottom_row + left_row + right_row)
 
-                        pprint('the current goal value\'s position satisfies the knowledge condition.',
-                            num_indents=num_indents + 1, new_line_start=True, draw_line=False)
+                        if 0 <= gx < len(vis_env) and 0 <= gy < len(vis_env[0]):
+                            if vis_env[gx][gy] == self.goal_value:
+                                best_compare = 0
 
-                    if compare == None:
+                            pprint('the current goal value\'s position satisfies the knowledge condition.',
+                                num_indents=num_indents + 1, new_line_start=True, draw_line=False)
 
-                        pprint('the current goal value\'s position does not satisfy the knowledge condition.',
-                            num_indents=num_indents + 1, new_line_start=True, draw_line=False)
-                        pprint('using an expanding square search of the model\'s vis_env',
-                            num_indents=num_indents + 1)
-                        pprint('to find the closest goal value ...', num_indents=num_indents + 1)
+                        if compare == None:
 
-                        d = 1  # d = distance from focus value
-                        while True:
+                            pprint('the current goal value\'s position does not satisfy the knowledge condition.',
+                                num_indents=num_indents + 1, new_line_start=True, draw_line=False)
+                            pprint('using an expanding square search of the model\'s vis_env',
+                                num_indents=num_indents + 1)
+                            pprint('to find the closest goal value ...', num_indents=num_indents + 1)
 
-                            # stop searching if the closest possible goal value has been found
-                            if compare and d > compare:
-                                break
+                            d = 1  # d = distance from focus value
+                            while True:
 
-                            # stop searching if there is guaranteed to be no more border
-                            # because we have reached the final edge of the vis_env
-                            if d > max_d:
-                                break
+                                # stop searching if the closest possible goal value has been found
+                                if compare and d > compare:
+                                    break
 
-                            # get the current square border and increment its
-                            # distance for the next border
-                            border = next_search_border(vis_env, gx, gy, d)
-                            d += 1
+                                # stop searching if there is guaranteed to be no more border
+                                # because we have reached the final edge of the vis_env
+                                if d > max_d:
+                                    break
 
-                            # if no border was found, we've reached the final edge
-                            if not border:
-                                break
+                                # get the current square border and increment its
+                                # distance for the next border
+                                border = next_search_border(vis_env, gx, gy, d)
+                                d += 1
 
-                            for val, (x, y) in border:
+                                # if no border was found, we've reached the final edge
+                                if not border:
+                                    break
 
-                                # if this value of the model is the goal value
-                                if val == self.goal_value:
+                                for val, (x, y) in border:
 
-                                    # distance = number of sub-symbolic inputs from the
-                                    # the goal_source's position to the current position
-                                    distance = abs(gx - x) + abs(gy - y)
+                                    # if this value of the model is the goal value
+                                    if val == self.goal_value:
 
-                                    # update compare if there's no compare value
-                                    # or this value is closer
-                                    compare = distance if not compare or \
-                                        distance < compare else compare
+                                        # distance = number of sub-symbolic inputs from the
+                                        # the goal_source's position to the current position
+                                        distance = abs(gx - x) + abs(gy - y)
 
-                                    #if not 0 <= x - gx <= len(vis_env) or not 0 <= y - gy <= len(vis_env[0]):
-                                        #compare = 999999
+                                        # update compare if there's no compare value
+                                        # or this value is closer
+                                        compare = distance if not compare or \
+                                            distance < compare else compare
 
-                    # set the model's compare field to the number
-                    # of moves to the closest goal
-                    if best_compare == None or compare < best_compare:
-                        best_compare = compare
+                                        #if not 0 <= x - gx <= len(vis_env) or not 0 <= y - gy <= len(vis_env[0]):
+                                            #compare = 999999
 
-        except:
-            pass
+                        # set the model's compare field to the number
+                        # of moves to the closest goal
+                        if best_compare == None or compare < best_compare:
+                            best_compare = compare
+
+            except:
+                pass
+        else:
+            best_compare = abs(model.aux_env[model.focus_index] - self.goal_value)
 
         if best_compare == None:
             best_compare = 999999
@@ -1830,7 +1861,7 @@ class AIRIS(object):
 
         self.print_knowledge(num_indents=num_indents + 1, new_line_start=True)
 
-        self.save_knowledge()
+        #self.save_knowledge()
 
         pprint('update complete. duration: %s' % (datetime.now() - start_time),
             num_indents=num_indents, new_line_start=True, draw_line=True)

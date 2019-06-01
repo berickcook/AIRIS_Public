@@ -13,24 +13,23 @@ class Test(object):
             [1, 2, 1],
             [1, 2, 1]
         ]
+
         self.airis = AIRIS(self.vis_env, self.aux_env, self.action_space, self.action_output_list)
 
     def update(self):
         self.action, _, _ = self.airis.capture_input(self.vis_env, self.aux_env, 0, prior=True)
 
+
         if self.action == 0:
-            self.aux_env[0] -= 1
+            self.aux_env[2] -= 4
             self.aux_env[1] -= 1
             #self.vis_env[0][1] -= 1
         else:
-            self.aux_env[0] += 1
+            self.aux_env[2] += 4
             self.aux_env[1] += 1
             #self.vis_env[0][1] += 1
 
         self.airis.capture_input(self.vis_env, self.aux_env, self.action, prior=False)
-
-        self.aux_env[0] = 0
-        self.aux_env[1] = 0
 
 if __name__ == '__main__':
 
@@ -38,4 +37,3 @@ if __name__ == '__main__':
 
     while True:
         test.update()
-        interrupt = input()
