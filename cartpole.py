@@ -39,37 +39,41 @@ if __name__ == '__main__':
     # env = wrappers.Monitor(env, directory=outdir, force=True)
     env.seed(0)
     agent = AIAgent(env.action_space)
+    result_data = []
 
-    episode_count = 100
-    episode_score = 0
-    reward = 0
-    done = False
-    run_total = 0
-
-    for i in range(episode_count):
-        ob = env.reset()
-        run_total += episode_score
+    for batch in range(50):
+        episode_count = 100
         episode_score = 0
-        while True:
-            action, _, _ = agent.airis.capture_input([[0]], [round(ob[2], 2), round(ob[1], 2), round(ob[0], 2), round(ob[3], 2)], 0, prior=True)
-            if action is None:
-                action = env.action_space.sample()
-                print ('AI took no action')
-            ob, reward, done, _ = env.step(action)
-            episode_score += reward
-            if action is not None:
-                agent.airis.capture_input([[0]], [round(ob[2], 2), round(ob[1], 2), round(ob[0], 2), round(ob[3], 2)], action, prior=False)
-            print(action, ob, reward, done, i)
-            if done:
-                print('episode score: ', episode_score)
-                break
-            # env.render()
-            # Note there's no env.render() here. But the environment still can open window and
-            # render if asked by env.monitor: it calls env.render('rgb_array') to record video.
-            # Video is not recorded every episode, see capped_cubic_video_schedule for details.
+        reward = 0
+        done = False
+        run_total = 0
 
-    # Close the env and write monitor result info to disk
-    print('average score: ', run_total, run_total / 100)
+        for i in range(episode_count):
+            ob = env.reset()
+            run_total += episode_score
+            episode_score = 0
+            while True:
+                action, _, _ = agent.airis.capture_input([[0]], [round(ob[2], 2), round(ob[1], 2), round(ob[0], 2), round(ob[3], 2)], 0, prior=True)
+                if action is None:
+                    action = env.action_space.sample()
+                    print ('AI took no action')
+                ob, reward, done, _ = env.step(action)
+                episode_score += reward
+                if action is not None:
+                    agent.airis.capture_input([[0]], [round(ob[2], 2), round(ob[1], 2), round(ob[0], 2), round(ob[3], 2)], action, prior=False)
+                print(action, ob, reward, done, i, run_total/100, result_data)
+                if done:
+                    print('episode score: ', episode_score)
+                    break
+                # env.render()
+                # Note there's no env.render() here. But the environment still can open window and
+                # render if asked by env.monitor: it calls env.render('rgb_array') to record video.
+                # Video is not recorded every episode, see capped_cubic_video_schedule for details.
+
+        # Close the env and write monitor result info to disk
+        print('average score: ', run_total, run_total / 100)
+        result_data.append(run_total / 100)
+
     agent.airis.save_knowledge()
 
     env.close()

@@ -1195,7 +1195,7 @@ class AIRIS(object):
         if best_compare == None:
             best_compare = 999999
 
-        model.compare = best_compare
+        model.compare = round(best_compare, 2)
 
         pprint('goal value%sfound. model.compare set to: %s. duration: %s' %
             (' ' if model.compare != None else ' not ', model.compare, (datetime.now() - start_time)),
