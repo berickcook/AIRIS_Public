@@ -54,7 +54,7 @@ class AIRIS(object):
         # output range of each action [min, max, increment size]
         self.action_output_list = action_output_list
         self.action_plan = []  # sequence of planned actions
-        self.action_plan_depth_limit = 50
+        self.action_plan_depth_limit = 1
 
         self.goal_type_default = 'Random'
         self.goal_type = 'Random'
@@ -713,7 +713,7 @@ class AIRIS(object):
                 else:
                     if model.focus_value_is_aux:
                         self.goal_condition = random.choice(self.knowledge[path + '/A' + str(model.focus_value)])
-                        model.focus_index = 2
+                        model.focus_index = 0
                         #model.focus_index = self.knowledge[path + '/A' + str(model.focus_value) + '/' + str(self.goal_condition) + '/focus_i']
                 self.print_goal_condition(num_indents=4)
                 self.goal_type = self.goal_type_default
@@ -817,6 +817,7 @@ class AIRIS(object):
             # how far away that model is from the goal state, and its index
             # use this heap to generate more models on as we go
             base_model_heap = [(model.compare, self.current_model_index)]
+            model_compare_heap = [(model.compare, self.current_model_index)]
 
             # a way to see if a model has already been generated
             # model_set = {model}
@@ -871,6 +872,7 @@ class AIRIS(object):
                                           + np.array_str(model.aux_env)
                                 if model_env not in model_set:
                                     heapq.heappush(base_model_heap, (model.compare + model.depth, self.current_model_index))
+                                    heapq.heappush(model_compare_heap, (model.compare, self.current_model_index))
                                     model_set.add(model_env)
                                 if model.compare == 0:
                                     if not model.focus_value_is_aux:
@@ -912,7 +914,7 @@ class AIRIS(object):
                     print('Insufficient knowledge to achieve: ')
                     print(self.goal_source,'where value =',self.goal_value)
                     if plan_depth > self.action_plan_depth_limit:
-                        self.action_plan_depth_limit += 5
+                        #self.action_plan_depth_limit += 5
                         print('Increasing plan depth to ',str(self.action_plan_depth_limit))
 
                     worst_condition.extend(new_condition)
@@ -985,14 +987,43 @@ class AIRIS(object):
 
                         print('Action plan: ',self.action_plan)
 
+                    # if there are no more worst conditions to try, use the model with the best compare
                     else:
+                        closest_model = heapq.heappop(model_compare_heap)[1]
+                        self.current_model_index = closest_model
+                        model = self.models[self.current_model_index]
+                        if not model.focus_value_is_aux:
+                            pprint('model compare Exception', num_indents=num_indents + 1)
+                            self.predict(self.goal_action, self.goal_output, num_indents=num_indents + 1)
+                            if model.best_condition_id:
+                                source = self.current_model_index
+                                model = self.models[source]
+                            else:
+                                source = self.models[self.current_model_index].previous_model_index
+                                self.action_plan.append((self.goal_action, self.goal_output, source))
+                                model = self.models[source]
+                            while model.previous_model_index != None:
+                                self.action_plan.append((model.previous_action, model.previous_output, source))
+                                source = model.previous_model_index
+                                model = self.models[source]  # model.previous is an index
+                            self.goal_reached = True
+
+                        else:
+                            pprint('model compare AUX Exception', num_indents=num_indents + 1)
+                            source = self.current_model_index
+                            model = self.models[source]
+                            while model.previous_model_index != None:
+                                self.action_plan.append((model.previous_action, model.previous_output, source))
+                                source = model.previous_model_index
+                                model = self.models[source]  # model.previous is an index
+                            self.goal_reached = True
+
                         pprint('Cannot determine how to achieve goal.', num_indents=num_indents + 1)
                         pprint('No more worst_condition\'s left to try.', num_indents=num_indents + 1)
+                        pprint('Closest I can think of is '+str(closest_model), num_indents=num_indents + 1)
                         #pprint('Clearing worst_set:', num_indents=num_indents)
                         #self.worst_set.clear()
                         #print('Clearing worst_set')
-                        pprint('Abandoning goal.', num_indents=num_indents + 1)
-                        print('No more worst_conditions? Check ',worst_condition_check)
 
         elif self.goal_type == 'New Action':
 
