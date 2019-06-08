@@ -41,39 +41,40 @@ if __name__ == '__main__':
     env.seed(0)
     agent = AIAgent(env.action_space)
 
-    for n in range(50):
+    for n in range(1000):
         start_time = time.time()
         episode_count = 100
         episode_score = 0
         reward = 0
         done = False
         run_total = 0
+        round_to = 2
 
         for i in range(episode_count):
             ob = env.reset()
             run_total += episode_score
             episode_score = 0
             while True:
-                action, _, _ = agent.airis.capture_input([[0]], [round(ob[2], 2), round(ob[1], 2), round(ob[0], 2), round(ob[3], 2)], 0, prior=True)
+                action, _, _ = agent.airis.capture_input([[0]], [round(ob[2], round_to), round(ob[1], round_to), 0, round(ob[3], round_to)], 0, prior=True)
                 if action is None:
                     action = env.action_space.sample()
                     print ('AI took no action')
+                print(action, [round(ob[2], round_to), round(ob[1], round_to), 0, round(ob[3], round_to)])
                 ob, reward, done, _ = env.step(action)
                 episode_score += reward
                 if action is not None:
-                    agent.airis.capture_input([[0]], [round(ob[2], 2), round(ob[1], 2), round(ob[0], 2), round(ob[3], 2)], action, prior=False)
-                print(action, ob, reward, done, i, run_total / (i+1), 'batch: ', n)
+                    agent.airis.capture_input([[0]], [round(ob[2], round_to), round(ob[1], round_to), 0, round(ob[3], round_to)], action, prior=False)
+                print(action, [round(ob[2], round_to), round(ob[1], round_to), 0, round(ob[3], round_to)], reward, done, i, run_total / (i+1), 'batch: ', n)
                 if done:
                     print('episode score: ', episode_score)
                     break
-                # env.render()
                 # Note there's no env.render() here. But the environment still can open window and
                 # render if asked by env.monitor: it calls env.render('rgb_array') to record video.
                 # Video is not recorded every episode, see capped_cubic_video_schedule for details.
 
         # Close the env and write monitor result info to disk
         print('average score: ', run_total, run_total / 100)
-        with open('cartpole_log.txt', 'a') as file:
+        with open('cartpole_log_NoCartPos_latest_2RoundedInputs_1Depth.txt', 'a') as file:
             file.write(str(run_total / 100)+' | '+str(time.time() - start_time)+'\n')
         agent.airis.save_knowledge()
 

@@ -922,7 +922,7 @@ class AIRIS(object):
                     for i, (dif, index, id, compare, act, out, raw, focus, current) in enumerate(worst_condition):
                         if id != None:
                             raw_dif = 0
-                            path = str(act) + '/' + str(out) + '/' + str(focus) + '/' + str(id) + '/'
+                            path = self.models[index].best_condition_path
                             condition_data_array = self.knowledge[path + 'vis_data']
                             condition_aux_data_array = self.knowledge[path + 'aux_data']
                             raw_dif = np.sum(array_dif(self.models[index].vis_env, condition_data_array))
@@ -989,6 +989,7 @@ class AIRIS(object):
 
                     # if there are no more worst conditions to try, use the model with the best compare
                     else:
+                        print('model_compare_heap ', model_compare_heap)
                         closest_model = heapq.heappop(model_compare_heap)[1]
                         self.current_model_index = closest_model
                         model = self.models[self.current_model_index]
@@ -1248,8 +1249,7 @@ class AIRIS(object):
 
         model = self.models[self.current_model_index]
         # get the path of the prior focus value in the knowledge
-        path = str(action) + '/' + str(output) + '/' +  \
-               str(model.focus_value) + '/' + str(model.best_condition_id)
+        path = model.best_condition_path
 
         # put a copy of the current model at the end of the list of models
         self.current_model_index = self.create_model(self.current_model_index, num_indents=num_indents + 1)
@@ -1272,15 +1272,15 @@ class AIRIS(object):
             is_aux = str(model.focus_value)
 
             if is_aux[0] == 'A':
-                predicted_posterior_value = self.knowledge[path + '/posterior_val']
+                predicted_posterior_value = self.knowledge[path + 'posterior_val']
                 model.update_aux_value(predicted_posterior_value, model.focus_index)
 
             else:
-                predicted_posterior_val = self.knowledge[path + '/posterior_val']
+                predicted_posterior_val = self.knowledge[path + 'posterior_val']
                 model.update_vis_value(predicted_posterior_val, model.focus_pos)
 
             try:
-                predict_vis_ref = self.knowledge[path + '/vis_ref']
+                predict_vis_ref = self.knowledge[path + 'vis_ref']
 
             except KeyError:
                 predict_vis_ref = []
@@ -1299,7 +1299,7 @@ class AIRIS(object):
                     num_indents=num_indents + 1, new_line_start=True)
 
             try:
-                predict_aux_ref = self.knowledge[path + '/aux_ref']
+                predict_aux_ref = self.knowledge[path + 'aux_ref']
 
             except KeyError:
                 predict_aux_ref = []
@@ -1838,6 +1838,17 @@ class AIRIS(object):
             except ValueError:
                 self.knowledge[path].append(A + condition_focus_value)
 
+            ''' Not until things are separated
+            if A == "A":
+                auxpath = action + '/' + output + '/aux_raw'
+                try:
+                    self.knowledge[auxpath].index(float(condition_focus_value))
+                except KeyError:
+                    self.knowledge[auxpath] = [float(condition_focus_value)]
+                except ValueError:
+                    self.knowledge[auxpath].append(float(condition_focus_value))
+            '''
+
             path += '/' + A + condition_focus_value
             change_condition_id = str(self.condition_id)
             try:
@@ -2129,28 +2140,35 @@ class AIRIS(object):
             condition_count_heap = []
 
             if not model.best_condition_id:
-                for aux_index, aux_value in enumerate(model.aux_env):
-                    model.focus_value = 'A' + str(aux_value)
-                    model.focus_value_is_aux = True
 
-                    if model.focus_value in focus_list:
-                        pprint('Aux focus_value = ' + str(model.focus_value), num_indents=num_indents + 1)
-                        condition_path = str(action) + '/' + str(output) + '/' + model.focus_value
-                        try:
-                            condition_list = self.knowledge[condition_path]
-                        except KeyError:
-                            condition_list = []
+                ''' Not until things are separated
+                array = np.asarray(self.knowledge[str(action) + '/' + str(output) + '/aux_raw'])
+                value = model.aux_env[model.focus_index]
+                idx = (np.abs(array - value)).argmin()
 
-                        for condition_id in condition_list:
-                            data_path = condition_path + '/' + str(condition_id) + '/'
-                            if aux_index == self.knowledge[data_path + 'focus_i']:
-                                condition_data_array = self.knowledge[data_path + 'vis_data']
-                                condition_aux_data_array = self.knowledge[data_path + 'aux_data']
+                model.focus_value = 'A' + str(array[idx])
+                '''
+                model.focus_value = 'A' + str(model.aux_env[model.focus_index])
+                model.focus_value_is_aux = True
 
-                                condition_dif = np.sum(array_dif(vis_model, condition_data_array))
-                                condition_dif += np.sum(array_dif(aux_model, condition_aux_data_array))
+                pprint('Aux focus_value = ' + str(model.focus_value), num_indents=num_indents + 1)
+                condition_path = str(action) + '/' + str(output) + '/' + model.focus_value
+                try:
+                    condition_list = self.knowledge[condition_path]
+                except KeyError:
+                    condition_list = []
 
-                                heapq.heappush(condition_heap, (condition_dif, model.focus_value, aux_index, condition_id, data_path))
+                for condition_id in condition_list:
+                    data_path = condition_path + '/' + str(condition_id) + '/'
+                    condition_data_array = self.knowledge[data_path + 'vis_data']
+                    condition_aux_data_array = self.knowledge[data_path + 'aux_data']
+
+                    condition_dif = np.sum(array_dif(vis_model, condition_data_array))
+                    condition_dif += np.sum(array_dif(aux_model, condition_aux_data_array))
+
+                    heapq.heappush(condition_heap, (condition_dif, 'A'+str(model.aux_env[model.focus_index]), model.focus_index, condition_id, data_path))
+                    print (condition_heap, (condition_dif, 'A'+str(model.aux_env[model.focus_index]), model.focus_index, condition_id, data_path))
+                    interrupt = input()
 
                 if condition_heap:
                     model.best_condition_dif = condition_heap[0][0]
