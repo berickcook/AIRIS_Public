@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
         # Close the env and write monitor result info to disk
         print('average score: ', run_total, run_total / 100)
-        with open('cartpole_log_NoCartPos_latest_2RoundedInputs_1Depth.txt', 'a') as file:
+        with open('cartpole_log_NoCartPos_2RoundedDiff_2RoundedInputs_200Depth.txt', 'a') as file:
             file.write(str(run_total / 100)+' | '+str(time.time() - start_time)+'\n')
         agent.airis.save_knowledge()
 

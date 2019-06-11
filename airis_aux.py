@@ -54,7 +54,7 @@ class AIRIS(object):
         # output range of each action [min, max, increment size]
         self.action_output_list = action_output_list
         self.action_plan = []  # sequence of planned actions
-        self.action_plan_depth_limit = 1
+        self.action_plan_depth_limit = 200
 
         self.goal_type_default = 'Random'
         self.goal_type = 'Random'
@@ -784,6 +784,7 @@ class AIRIS(object):
                 self.print_goal_source(num_indents=num_indents + 3)
             except KeyError:
                 pprint('knowledge not found', num_indents=num_indents + 2)
+                self.goal_value = 0.0
                 # pass
         if goal_found:
             pprint('goal set. duration: %s' % (datetime.now() - start_time),
@@ -842,10 +843,13 @@ class AIRIS(object):
 
             pprint('MODELCOMPARE '+str(model.compare), num_indents=num_indents + 1)
 
-            while not self.goal_reached and base_model_heap and plan_depth <= self.action_plan_depth_limit:
+            confident = True
+
+            while not self.goal_reached and base_model_heap and plan_depth <= self.action_plan_depth_limit and confident:
 
                 base_model = heapq.heappop(base_model_heap)[1]
                 plan_depth += 1
+                confident = False
                 pprint (str(plan_depth) + ' / ' + str(self.action_plan_depth_limit), num_indents=num_indents + 1)
                 for action_index, try_action in enumerate(self.action_space):
                     if not self.goal_reached:
@@ -857,6 +861,8 @@ class AIRIS(object):
                             self.predict(try_action, try_output, num_indents=num_indents + 1)
                             if model.best_condition_id:
                                 worst_dif = int(copy.deepcopy(model.best_condition_dif))
+                                if worst_dif == 0:
+                                    confident = True
                                 worst_id = int(copy.deepcopy(model.best_condition_id))
                                 prev_model = model
                                 model = self.models[self.current_model_index]
@@ -1982,11 +1988,11 @@ class AIRIS(object):
                                 except KeyError:
                                     pass
 
-                                heapq.heappush(condition_heap, (condition_dif, model.focus_value, condition_id, focus_x, focus_y, data_path))
+                                heapq.heappush(condition_heap, (round(condition_dif, 2), model.focus_value, condition_id, focus_x, focus_y, data_path))
 
                                 try:
                                     if condition_count[model.focus_value]:
-                                        heapq.heappush(condition_count_heap, (condition_dif, model.focus_value, condition_id, focus_x, focus_y, data_path))
+                                        heapq.heappush(condition_count_heap, (round(condition_dif, 2), model.focus_value, condition_id, focus_x, focus_y, data_path))
                                 except KeyError:
                                     pass
 
@@ -2166,9 +2172,7 @@ class AIRIS(object):
                     condition_dif = np.sum(array_dif(vis_model, condition_data_array))
                     condition_dif += np.sum(array_dif(aux_model, condition_aux_data_array))
 
-                    heapq.heappush(condition_heap, (condition_dif, 'A'+str(model.aux_env[model.focus_index]), model.focus_index, condition_id, data_path))
-                    print (condition_heap, (condition_dif, 'A'+str(model.aux_env[model.focus_index]), model.focus_index, condition_id, data_path))
-                    interrupt = input()
+                    heapq.heappush(condition_heap, (round(condition_dif, 2), 'A'+str(model.aux_env[model.focus_index]), model.focus_index, condition_id, data_path))
 
                 if condition_heap:
                     model.best_condition_dif = condition_heap[0][0]
