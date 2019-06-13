@@ -817,7 +817,7 @@ class AIRIS(object):
             model.depth = 0
             # how far away that model is from the goal state, and its index
             # use this heap to generate more models on as we go
-            base_model_heap = [(model.compare, self.current_model_index)]
+            base_model_heap = [(model.compare, self.current_model_index, 0)]
             model_compare_heap = [(model.compare, self.current_model_index)]
 
             # a way to see if a model has already been generated
