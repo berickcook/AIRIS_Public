@@ -1856,54 +1856,106 @@ class AIRIS(object):
                 except ValueError:
                     self.knowledge[auxpath].append(float(condition_focus_value))
             '''
-
             path += '/' + A + condition_focus_value
-            change_condition_id = str(self.condition_id)
-            try:
-                self.knowledge[path].index(change_condition_id)
-            except KeyError:
-                self.knowledge[path] = [change_condition_id]
-            except ValueError:
-                self.knowledge[path].append(change_condition_id)
 
-            path += '/' + change_condition_id + '/'
-            self.knowledge[path + 'posterior_val'] = self.posterior_focus_value
+            for cond in self.knowledge[path]:
+                duplicate = True
+                dup_path = path + '/' + cond + '/'
+                if self.knowledge[dup_path + 'posterior_val'] != self.posterior_focus_value:
+                    duplicate = False
+                if A == '':
+                    if self.knowledge[dup_path + 'focus_x'] != focus_x:
+                        duplicate = False
+                    if self.knowledge[dup_path + 'focus_y'] != focus_y:
+                        duplicate = False
+                else:
+                    if self.knowledge[dup_path + 'focus_i'] != focus_index:
+                        duplicate = False
+                if self.knowledge[dup_path + 'vis_data'] != copy.deepcopy(self.prior_vis_env):
+                    duplicate = False
+                if self.knowledge[dup_path + 'aux_data'] != copy.deepcopy(self.prior_aux_env):
+                    duplicate = False
 
-            if A == '':
-                self.knowledge[path + 'focus_x'] = focus_x
-                self.knowledge[path + 'focus_y'] = focus_y
-            else:
-                self.knowledge[path + 'focus_i'] = focus_index
+                for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list):
+                    if i != self.vis_change_index:
+                        dx = x - focus_x
+                        dy = y - focus_y
+                        vis_ref_data = (dx, dy, prior_val, posterior_val)
+                        try:
+                            if vis_ref_data not in self.knowledge[dup_path + 'vis_ref']:
+                                duplicate = False
+                                break
+                        except KeyError:
+                            duplicate = False
+                            break
 
-            self.knowledge[path + 'vis_data'] = copy.deepcopy(self.prior_vis_env)
-            self.knowledge[path + 'aux_data'] = copy.deepcopy(self.prior_aux_env)
+                # /aux_ref
+                for i, prior_val, posterior_val in self.aux_change_list:
 
-            self.knowledge[path + 'post_vis_data'] = copy.deepcopy(self.posterior_vis_env)
-            self.knowledge[path + 'post_aux_data'] = copy.deepcopy(self.posterior_aux_env)
+                    # if there's vis change data, store ALL the data
+                    if i != focus_index or self.vis_change_list:
+                        aux_ref_data = (i, prior_val, posterior_val)
+                        try:
+                            if aux_ref_data not in self.knowledge[dup_path + 'aux_ref']:
+                                duplicate = False
+                                break
+                        except KeyError:
+                            duplicate = False
+                            break
 
-            self.knowledge[path + 'rel_abs'] = 0
+                if duplicate:
+                    print('DUPLICATE!')
+                    interrupt = input()
+                    break
 
-            # /vis_ref
-            for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list):
-                if i != self.vis_change_index:
-                    dx = x - focus_x
-                    dy = y - focus_y
-                    vis_ref_data = (dx, dy, prior_val, posterior_val)
-                    try:
-                        self.knowledge[path + 'vis_ref'].append(vis_ref_data)
-                    except KeyError:
-                        self.knowledge[path + 'vis_ref'] = [vis_ref_data]
+            if not duplicate:
 
-            # /aux_ref
-            for i, prior_val, posterior_val in self.aux_change_list:
+                change_condition_id = str(self.condition_id)
+                try:
+                    self.knowledge[path].index(change_condition_id)
+                except KeyError:
+                    self.knowledge[path] = [change_condition_id]
+                except ValueError:
+                    self.knowledge[path].append(change_condition_id)
 
-                # if there's vis change data, store ALL the data
-                if i != focus_index or self.vis_change_list:
-                    aux_ref_data = (i, prior_val, posterior_val)
-                    try:
-                        self.knowledge[path + 'aux_ref'].append(aux_ref_data)
-                    except KeyError:
-                        self.knowledge[path + 'aux_ref'] = [aux_ref_data]
+                path += '/' + change_condition_id + '/'
+                self.knowledge[path + 'posterior_val'] = self.posterior_focus_value
+
+                if A == '':
+                    self.knowledge[path + 'focus_x'] = focus_x
+                    self.knowledge[path + 'focus_y'] = focus_y
+                else:
+                    self.knowledge[path + 'focus_i'] = focus_index
+
+                self.knowledge[path + 'vis_data'] = copy.deepcopy(self.prior_vis_env)
+                self.knowledge[path + 'aux_data'] = copy.deepcopy(self.prior_aux_env)
+
+                self.knowledge[path + 'post_vis_data'] = copy.deepcopy(self.posterior_vis_env)
+                self.knowledge[path + 'post_aux_data'] = copy.deepcopy(self.posterior_aux_env)
+
+                self.knowledge[path + 'rel_abs'] = 0
+
+                # /vis_ref
+                for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list):
+                    if i != self.vis_change_index:
+                        dx = x - focus_x
+                        dy = y - focus_y
+                        vis_ref_data = (dx, dy, prior_val, posterior_val)
+                        try:
+                            self.knowledge[path + 'vis_ref'].append(vis_ref_data)
+                        except KeyError:
+                            self.knowledge[path + 'vis_ref'] = [vis_ref_data]
+
+                # /aux_ref
+                for i, prior_val, posterior_val in self.aux_change_list:
+
+                    # if there's vis change data, store ALL the data
+                    if i != focus_index or self.vis_change_list:
+                        aux_ref_data = (i, prior_val, posterior_val)
+                        try:
+                            self.knowledge[path + 'aux_ref'].append(aux_ref_data)
+                        except KeyError:
+                            self.knowledge[path + 'aux_ref'] = [aux_ref_data]
 
         else:
             pprint('not updating knowledge, no condition_focus_value',
