@@ -847,9 +847,11 @@ class AIRIS(object):
 
             while not self.goal_reached and base_model_heap and plan_depth <= self.action_plan_depth_limit and confident:
 
+                confident = False
+                if base_model_heap[0][2] == 0:
+                    confident = True
                 base_model = heapq.heappop(base_model_heap)[1]
                 plan_depth += 1
-                confident = False
                 pprint (str(plan_depth) + ' / ' + str(self.action_plan_depth_limit), num_indents=num_indents + 1)
                 for action_index, try_action in enumerate(self.action_space):
                     if not self.goal_reached:
@@ -861,8 +863,8 @@ class AIRIS(object):
                             self.predict(try_action, try_output, num_indents=num_indents + 1)
                             if model.best_condition_id:
                                 worst_dif = int(copy.deepcopy(model.best_condition_dif))
-                                if worst_dif == 0:
-                                    confident = True
+                                # if worst_dif == 0:
+                                #     confident = True
                                 worst_id = int(copy.deepcopy(model.best_condition_id))
                                 prev_model = model
                                 model = self.models[self.current_model_index]
@@ -877,7 +879,7 @@ class AIRIS(object):
                                 model_env = np.array_str(model.vis_env) \
                                           + np.array_str(model.aux_env)
                                 if model_env not in model_set:
-                                    heapq.heappush(base_model_heap, (model.compare + model.depth, self.current_model_index))
+                                    heapq.heappush(base_model_heap, (model.compare + model.depth, self.current_model_index, worst_dif))
                                     heapq.heappush(model_compare_heap, (model.compare, self.current_model_index))
                                     model_set.add(model_env)
                                 if model.compare == 0:
@@ -2146,33 +2148,29 @@ class AIRIS(object):
             condition_count_heap = []
 
             if not model.best_condition_id:
+                for aux_index, aux_value in enumerate(model.aux_env):
+                    model.focus_value = 'A' + str(aux_value)
+                    model.focus_value_is_aux = True
 
-                ''' Not until things are separated
-                array = np.asarray(self.knowledge[str(action) + '/' + str(output) + '/aux_raw'])
-                value = model.aux_env[model.focus_index]
-                idx = (np.abs(array - value)).argmin()
+                    if model.focus_value in focus_list:
+                        pprint('Aux focus_value = ' + str(model.focus_value), num_indents=num_indents + 1)
+                        condition_path = str(action) + '/' + str(output) + '/' + model.focus_value
+                        try:
+                            condition_list = self.knowledge[condition_path]
+                        except KeyError:
+                            condition_list = []
 
-                model.focus_value = 'A' + str(array[idx])
-                '''
-                model.focus_value = 'A' + str(model.aux_env[model.focus_index])
-                model.focus_value_is_aux = True
+                        for condition_id in condition_list:
+                            data_path = condition_path + '/' + str(condition_id) + '/'
+                            if aux_index == self.knowledge[data_path + 'focus_i']:
+                                condition_data_array = self.knowledge[data_path + 'vis_data']
+                                condition_aux_data_array = self.knowledge[data_path + 'aux_data']
 
-                pprint('Aux focus_value = ' + str(model.focus_value), num_indents=num_indents + 1)
-                condition_path = str(action) + '/' + str(output) + '/' + model.focus_value
-                try:
-                    condition_list = self.knowledge[condition_path]
-                except KeyError:
-                    condition_list = []
+                                condition_dif = np.sum(array_dif(vis_model, condition_data_array))
+                                condition_dif += np.sum(array_dif(aux_model, condition_aux_data_array))
 
-                for condition_id in condition_list:
-                    data_path = condition_path + '/' + str(condition_id) + '/'
-                    condition_data_array = self.knowledge[data_path + 'vis_data']
-                    condition_aux_data_array = self.knowledge[data_path + 'aux_data']
-
-                    condition_dif = np.sum(array_dif(vis_model, condition_data_array))
-                    condition_dif += np.sum(array_dif(aux_model, condition_aux_data_array))
-
-                    heapq.heappush(condition_heap, (round(condition_dif, 2), 'A'+str(model.aux_env[model.focus_index]), model.focus_index, condition_id, data_path))
+                                heapq.heappush(condition_heap,
+                                               (round(condition_dif, 2), model.focus_value, aux_index, condition_id, data_path))
 
                 if condition_heap:
                     model.best_condition_dif = condition_heap[0][0]
