@@ -1858,55 +1858,58 @@ class AIRIS(object):
             '''
             path += '/' + A + condition_focus_value
 
-            for cond in self.knowledge[path]:
-                duplicate = True
-                dup_path = path + '/' + cond + '/'
-                if self.knowledge[dup_path + 'posterior_val'] != self.posterior_focus_value:
-                    duplicate = False
-                if A == '':
-                    if self.knowledge[dup_path + 'focus_x'] != focus_x:
+            try:
+                for cond in self.knowledge[path]:
+                    duplicate = True
+                    dup_path = path + '/' + cond + '/'
+                    if self.knowledge[dup_path + 'posterior_val'] != self.posterior_focus_value:
                         duplicate = False
-                    if self.knowledge[dup_path + 'focus_y'] != focus_y:
+                    if A == '':
+                        if self.knowledge[dup_path + 'focus_x'] != focus_x:
+                            duplicate = False
+                        if self.knowledge[dup_path + 'focus_y'] != focus_y:
+                            duplicate = False
+                    else:
+                        if self.knowledge[dup_path + 'focus_i'] != focus_index:
+                            duplicate = False
+                    if self.knowledge[dup_path + 'vis_data'] != copy.deepcopy(self.prior_vis_env):
                         duplicate = False
-                else:
-                    if self.knowledge[dup_path + 'focus_i'] != focus_index:
+                    if self.knowledge[dup_path + 'aux_data'] != copy.deepcopy(self.prior_aux_env):
                         duplicate = False
-                if self.knowledge[dup_path + 'vis_data'] != copy.deepcopy(self.prior_vis_env):
-                    duplicate = False
-                if self.knowledge[dup_path + 'aux_data'] != copy.deepcopy(self.prior_aux_env):
-                    duplicate = False
 
-                for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list):
-                    if i != self.vis_change_index:
-                        dx = x - focus_x
-                        dy = y - focus_y
-                        vis_ref_data = (dx, dy, prior_val, posterior_val)
-                        try:
-                            if vis_ref_data not in self.knowledge[dup_path + 'vis_ref']:
+                    for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list):
+                        if i != self.vis_change_index:
+                            dx = x - focus_x
+                            dy = y - focus_y
+                            vis_ref_data = (dx, dy, prior_val, posterior_val)
+                            try:
+                                if vis_ref_data not in self.knowledge[dup_path + 'vis_ref']:
+                                    duplicate = False
+                                    break
+                            except KeyError:
                                 duplicate = False
                                 break
-                        except KeyError:
-                            duplicate = False
-                            break
 
-                # /aux_ref
-                for i, prior_val, posterior_val in self.aux_change_list:
+                    # /aux_ref
+                    for i, prior_val, posterior_val in self.aux_change_list:
 
-                    # if there's vis change data, store ALL the data
-                    if i != focus_index or self.vis_change_list:
-                        aux_ref_data = (i, prior_val, posterior_val)
-                        try:
-                            if aux_ref_data not in self.knowledge[dup_path + 'aux_ref']:
+                        # if there's vis change data, store ALL the data
+                        if i != focus_index or self.vis_change_list:
+                            aux_ref_data = (i, prior_val, posterior_val)
+                            try:
+                                if aux_ref_data not in self.knowledge[dup_path + 'aux_ref']:
+                                    duplicate = False
+                                    break
+                            except KeyError:
                                 duplicate = False
                                 break
-                        except KeyError:
-                            duplicate = False
-                            break
 
-                if duplicate:
-                    print('DUPLICATE!')
-                    interrupt = input()
-                    break
+                    if duplicate:
+                        print('DUPLICATE!')
+                        interrupt = input()
+                        break
+            except KeyError:
+                duplicate = False
 
             if not duplicate:
 
