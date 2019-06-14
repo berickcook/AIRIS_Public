@@ -1857,6 +1857,7 @@ class AIRIS(object):
                     self.knowledge[auxpath].append(float(condition_focus_value))
             '''
             path += '/' + A + condition_focus_value
+            duplicate = False
 
             try:
                 for cond in self.knowledge[path]:
@@ -1872,9 +1873,13 @@ class AIRIS(object):
                     else:
                         if self.knowledge[dup_path + 'focus_i'] != focus_index:
                             duplicate = False
-                    if self.knowledge[dup_path + 'vis_data'] != copy.deepcopy(self.prior_vis_env):
+                    vis_data_array = array_dif(self.knowledge[dup_path + 'vis_data'], copy.deepcopy(self.prior_vis_env))
+                    dupx, dupy = np.nonzero(vis_data_array)
+                    if len(dupx) or len(dupy):
                         duplicate = False
-                    if self.knowledge[dup_path + 'aux_data'] != copy.deepcopy(self.prior_aux_env):
+                    aux_data_array = array_dif(self.knowledge[dup_path + 'aux_data'], copy.deepcopy(self.prior_aux_env))
+                    dupi, = np.nonzero(aux_data_array)
+                    if len(dupi):
                         duplicate = False
 
                     for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list):
@@ -1905,8 +1910,6 @@ class AIRIS(object):
                                 break
 
                     if duplicate:
-                        print('DUPLICATE!')
-                        interrupt = input()
                         break
             except KeyError:
                 duplicate = False
