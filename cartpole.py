@@ -68,13 +68,15 @@ if __name__ == '__main__':
                 if done:
                     print('episode score: ', episode_score)
                     break
+
                 # Note there's no env.render() here. But the environment still can open window and
                 # render if asked by env.monitor: it calls env.render('rgb_array') to record video.
                 # Video is not recorded every episode, see capped_cubic_video_schedule for details.
 
+        run_total += episode_score
         # Close the env and write monitor result info to disk
         print('average score: ', run_total, run_total / 100)
-        with open('cartpole_log_NoCartPos_2RoundedDiff_2RoundedInputs_200Depth.txt', 'a') as file:
+        with open('cartpole_NoCartPos_2RoundedDiff_2RoundedInputs_200Depth_OldCompare_NoDupe.txt', 'a') as file:
             file.write(str(run_total / 100)+' | '+str(time.time() - start_time)+'\n')
         agent.airis.save_knowledge()
 
