@@ -86,6 +86,7 @@ class AIRIS(object):
         self.worst_set = set()
         self.display_hold = False
         self.display_plan = [0]
+        self.round_to = 2
 
         pprint('initialization complete. duration: %s' % (datetime.now() - start_time))
 
@@ -713,8 +714,7 @@ class AIRIS(object):
                 else:
                     if model.focus_value_is_aux:
                         self.goal_condition = random.choice(self.knowledge[path + '/A' + str(model.focus_value)])
-                        model.focus_index = 0
-                        #model.focus_index = self.knowledge[path + '/A' + str(model.focus_value) + '/' + str(self.goal_condition) + '/focus_i']
+                        model.focus_index = self.knowledge[path + '/A' + str(model.focus_value) + '/' + str(self.goal_condition) + '/focus_i']
                 self.print_goal_condition(num_indents=4)
                 self.goal_type = self.goal_type_default
 
@@ -724,68 +724,81 @@ class AIRIS(object):
                 goal_found = True
                 pprint('goal_type reset to:\t%s' % self.goal_type, num_indents=num_indents + 2)
 
+            fv = str(model.focus_value) if not model.focus_value_is_aux else 'A' + str(model.focus_value)
+            gc = str(self.goal_condition) if self.goal_condition else ''
+            path = str(self.goal_action) + '/' + str(self.goal_output) \
+                   + '/' + fv + '/' + gc
+            # fv and gc are used because: TypeError: must be str, not NoneType
+            # when using model.focus_value and self.goal_condition directly
+
+            if not goal_found and not no_conditions:
+                try:
+                    pprint('searching for goal_source knowledge at: ' + path + '/vis_ref',
+                           num_indents=num_indents + 1, new_line_start=True)
+
+                    while True:
+                        x, y, prior_val, _ = random.choice(self.knowledge[path + '/vis_ref'])
+                        try:
+                            if model.vis_count[prior_val]:
+                                self.goal_source = {
+                                    'value': prior_val,
+                                    'x': x,
+                                    'y': y,
+                                    'i': None
+                                }
+                                self.goal_value = 3.0  # force airis to chase batteries
+                                # self.goal_value = prior_val if goal_type == 'Fixed' else \
+                                # random.sample(self.vis_global_set, 1)[0]
+                                goal_found = True
+                                pprint('knowledge found, goal_source set to:', num_indents=num_indents + 2)
+                                self.print_goal_source(num_indents=num_indents + 3)
+                                break
+                        except KeyError:
+                            pass
+                except KeyError:
+                    pprint('knowledge not found', num_indents=num_indents + 2)
+                    # pass
+
+            if not goal_found and self.goal_condition:
+                try:
+                    pprint('searching for goal_source knowledge at: ' + path + '/aux_ref',
+                           num_indents=num_indents + 1, new_line_start=True)
+                    i, val, _ = random.choice(self.knowledge[path + '/aux_ref'])
+                    self.goal_source = {
+                        'value': val,
+                        'x': None,
+                        'y': None,
+                        'i': i
+                    }
+                    self.goal_value = val if self.goal_type == 'Fixed' else \
+                        random.sample(self.aux_global_set, 1)[0]
+                    goal_found = True
+                    pprint('knowledge found, goal_source set to:', num_indents=num_indents + 2)
+                    self.print_goal_source(num_indents=num_indents + 3)
+                except KeyError:
+                    pprint('knowledge not found', num_indents=num_indents + 2)
+                    # pass
+
         if self.goal_type == 'Predict':
             goal_found = True
 
         if self.goal_type == 'Observe':
             goal_found = True
 
-        fv = str(model.focus_value) if not model.focus_value_is_aux else 'A'+str(model.focus_value)
-        gc = str(self.goal_condition) if self.goal_condition else ''
-        path = str(self.goal_action) + '/' + str(self.goal_output) \
-             + '/' + fv + '/' + gc
-        # fv and gc are used because: TypeError: must be str, not NoneType
-        # when using model.focus_value and self.goal_condition directly
+        if self.goal_type == 'Fixed':
+            self.goal_action = None
+            self.goal_output = 1
+            self.goal_source = {
+                'value': None,
+                'x': None,  # x of goal value relative to focus value
+                'y': None,  # y of goal value relative to focus value
+                'i': None  # i is for if the goal_source is an auxiliary input
+            }
+            self.goal_value = 0.0
+            model.focus_index = 0
+            model.focus_value_is_aux = True
 
-        if not goal_found and not no_conditions:
-            try:
-                pprint('searching for goal_source knowledge at: ' + path + '/vis_ref',
-                    num_indents=num_indents + 1, new_line_start=True)
 
-                while True:
-                    x, y, prior_val, _ = random.choice(self.knowledge[path + '/vis_ref'])
-                    try:
-                        if model.vis_count[prior_val]:
-                            self.goal_source = {
-                                'value': prior_val,
-                                'x': x,
-                                'y': y,
-                                'i': None
-                            }
-                            self.goal_value = 3.0 #force airis to chase batteries
-                            #self.goal_value = prior_val if goal_type == 'Fixed' else \
-                                #random.sample(self.vis_global_set, 1)[0]
-                            goal_found = True
-                            pprint('knowledge found, goal_source set to:', num_indents=num_indents + 2)
-                            self.print_goal_source(num_indents=num_indents + 3)
-                            break
-                    except KeyError:
-                        pass
-            except KeyError:
-                pprint('knowledge not found', num_indents=num_indents + 2)
-                # pass
-
-        if not goal_found and self.goal_condition:
-            try:
-                pprint('searching for goal_source knowledge at: ' + path + '/aux_ref',
-                    num_indents=num_indents + 1, new_line_start=True)
-                i, val, _ = random.choice(self.knowledge[path + '/aux_ref'])
-                self.goal_source = {
-                    'value': val,
-                    'x': None,
-                    'y': None,
-                    'i': i
-                }
-                self.goal_value = val if self.goal_type == 'Fixed' else \
-                    random.sample(self.aux_global_set, 1)[0]
-                self.goal_value = 0.0
-                goal_found = True
-                pprint('knowledge found, goal_source set to:', num_indents=num_indents + 2)
-                self.print_goal_source(num_indents=num_indents + 3)
-            except KeyError:
-                pprint('knowledge not found', num_indents=num_indents + 2)
-                self.goal_value = 0.0
-                # pass
         if goal_found:
             pprint('goal set. duration: %s' % (datetime.now() - start_time),
                 num_indents=num_indents, new_line_start=True, draw_line=True)
@@ -808,7 +821,7 @@ class AIRIS(object):
 
         pprint('GOALVALUE '+str(self.goal_value), num_indents=num_indents+1)
 
-        if self.goal_type == 'Random' and self.goal_value != None:
+        if (self.goal_type == 'Random' and self.goal_value != None) or self.goal_type == 'Fixed':
 
             # set the current model's compare field
             self.compare_model(self.current_model_index, num_indents=num_indents + 1)
@@ -843,13 +856,11 @@ class AIRIS(object):
 
             pprint('MODELCOMPARE '+str(model.compare), num_indents=num_indents + 1)
 
-            confident = True
+            while not self.goal_reached and base_model_heap and plan_depth <= self.action_plan_depth_limit:
 
-            while not self.goal_reached and base_model_heap and plan_depth <= self.action_plan_depth_limit and confident:
+                if base_model_heap[0][2] != 0:
+                    break
 
-                confident = False
-                if base_model_heap[0][2] == 0:
-                    confident = True
                 base_model = heapq.heappop(base_model_heap)[1]
                 plan_depth += 1
                 pprint (str(plan_depth) + ' / ' + str(self.action_plan_depth_limit), num_indents=num_indents + 1)
@@ -1235,7 +1246,7 @@ class AIRIS(object):
         if best_compare == None:
             best_compare = 999999
 
-        model.compare = round(best_compare, 2)
+        model.compare = round(best_compare, self.round_to)
 
         pprint('goal value%sfound. model.compare set to: %s. duration: %s' %
             (' ' if model.compare != None else ' not ', model.compare, (datetime.now() - start_time)),
@@ -1963,6 +1974,9 @@ class AIRIS(object):
                         except KeyError:
                             self.knowledge[path + 'aux_ref'] = [aux_ref_data]
 
+            else:
+                print('DUPLICATE KNOWLEDGE')
+
         else:
             pprint('not updating knowledge, no condition_focus_value',
                 num_indents=num_indents, new_line_start=True)
@@ -2048,11 +2062,11 @@ class AIRIS(object):
                                 except KeyError:
                                     pass
 
-                                heapq.heappush(condition_heap, (round(condition_dif, 2), model.focus_value, condition_id, focus_x, focus_y, data_path))
+                                heapq.heappush(condition_heap, (round(condition_dif, self.round_to), model.focus_value, condition_id, focus_x, focus_y, data_path))
 
                                 try:
                                     if condition_count[model.focus_value]:
-                                        heapq.heappush(condition_count_heap, (round(condition_dif, 2), model.focus_value, condition_id, focus_x, focus_y, data_path))
+                                        heapq.heappush(condition_count_heap, (round(condition_dif, self.round_to), model.focus_value, condition_id, focus_x, focus_y, data_path))
                                 except KeyError:
                                     pass
 
@@ -2228,7 +2242,7 @@ class AIRIS(object):
                                 condition_dif += np.sum(array_dif(aux_model, condition_aux_data_array))
 
                                 heapq.heappush(condition_heap,
-                                               (round(condition_dif, 2), model.focus_value, aux_index, condition_id, data_path))
+                                               (round(condition_dif, self.round_to), model.focus_value, aux_index, condition_id, data_path))
 
                 if condition_heap:
                     model.best_condition_dif = condition_heap[0][0]

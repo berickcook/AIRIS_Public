@@ -19,6 +19,8 @@ class AIAgent(object):
             [1, 2, 1]
         ]
         self.airis = AIRIS(self.vis_env, self.aux_env, self.action_space, self.action_output_list)
+        self.airis.goal_type = 'Fixed'
+        self.airis.goal_type_default = 'Fixed'
 
 
 if __name__ == '__main__':
@@ -36,7 +38,7 @@ if __name__ == '__main__':
     # directory, including one with existing data -- all monitor files
     # will be namespaced). You can also dump to a tempdir if you'd
     # like: tempfile.mkdtemp().
-    outdir = '/tmp/random-agent-results'
+    # outdir = '/tmp/random-agent-results'
     # env = wrappers.Monitor(env, directory=outdir, force=True)
     env.seed(0)
     agent = AIAgent(env.action_space)
@@ -76,7 +78,7 @@ if __name__ == '__main__':
         run_total += episode_score
         # Close the env and write monitor result info to disk
         print('average score: ', run_total, run_total / 100)
-        with open('cartpole_NoCartPos_2RoundedDiff_2RoundedInputs_200Depth_OldCompare_NoDupe.txt', 'a') as file:
+        with open('cartpole_NoCartPos_2Rounded_200Depth_NoDupe_FixedGoal.txt', 'a') as file:
             file.write(str(run_total / 100)+' | '+str(time.time() - start_time)+'\n')
         agent.airis.save_knowledge()
 
