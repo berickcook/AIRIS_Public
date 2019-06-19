@@ -12,17 +12,15 @@ By default, the AI is configured to run parallelized on your CPU. You can reconf
 
 `@vectorize(['float32(float32, float32)'], target="cuda")`
 
+Regardless of the test environment, AIRIS's learned knowledge is exported as one large python dictionary called "Knowledge.npy" whenever the `save_knowledge()` function is called. If this file exists, it is loaded on the startup of any environment. If this file is deleted or moved from the working directory, AIRIS will "start from scratch" and generate a new one.
+
 ###### The Cognitive Architecture of AIRIS 
 ![AIRIS Cognitive Architecture](https://airisai.files.wordpress.com/2019/01/airis-cognitive-architecture-3.png)
 
 # Example Tests
 
-Included in the stable release are 3 test environments.
-
-Simply run either puzzle_game_driver.py / mnist_driver2.py / or basic_example.py
-
 ## puzzle_game_driver.py 
-A grid-world puzzle game with various obstacles. The goal is to collect all batteries in a level.
+A grid-world puzzle game with various obstacles. The goal is to collect all batteries in a level. There are 13 levels with varying degrees of difficulty and obstacle variety.
 
 By default, this environnment is frame-limited to make it easier for the user to see what is happening. To remove this limitiation and allow the AI to operate at the maximum speed for your hardware, simply comment out line 1289.
 
@@ -42,8 +40,34 @@ Press the Space Bar on your keyboard to "approve" the plan and allow the AI to c
 
 To disable "view plan" mode, hold the Down Arrow
 
+## puzzle_game_editor.py
+This is the level editor for the puzzle game environment. You can use this editor to create your own custom levels for AIRIS to solve. Run puzzle_game_driver_custom.py to use the custom levels.
+
+![Puzzle Game Editor](https://airisai.files.wordpress.com/2019/06/puzzle_game_editor.png)
+
+Left Mouse Button selects an object from the object menu at the top and places a selected object in the level.
+
+Right Mouse Button deletes objects in the level.
+
+The "Clear" button will erase all objects in the level.
+
+A level must have at least 1 robot and 1 battery to unlock the "Play" button. During play mode, arrow keys move and you can either click on the red button at the top or press Spacebar to return to the editor. You will automatically return to the editor when you solve the level.
+
+To unlock "Save" you must play and solve your level.
+
+Levels are saved in \custom_levels in ".csv" format. The name of the level is the level number and is automatically assigned upon opening the editor and is shown in the window title. For example, if there is already "1.csv" and "2.csv" then your new level will be "3.csv".
+
+You can load a level for editing by adding the level number as a command line argument. For example: 
+
+`$ python puzzle_game_editor.py 2` will load level 2 for editing.
+
+You can only save whatever level was created or loaded on startup. To create or load another level, you must exit and restart the editor.
+
+## puzzle_game_driver_custom.py
+This is the grid-world puzzle game, but loads the custom levels stored in \custom_levels instead of the original 13.
+
 ## puzzle_game_driver_universal.py
-The same grid-world puzzle game, but with all AIRIS dependencies stripped out. This environment is for use with any other AI algorithm. 
+This is the grid-world puzzle game with the original 13 levels, but with all AIRIS dependencies stripped out. This environment is for use with any other AI algorithm. 
 
 It is designed to send 2 environmental arrays to an AI: A 20 x 15 grid of the game world filled with the integer IDs that represent the various game objects, and a 1 x 2 grid of integers that represent the number of Keys collected and Fire Extinguishers collected respectively.
 
