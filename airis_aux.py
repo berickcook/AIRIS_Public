@@ -87,6 +87,7 @@ class AIRIS(object):
         self.display_hold = False
         self.display_plan = [0]
         self.round_to = 2
+        self.assume_sample_size = 10
 
         pprint('initialization complete. duration: %s' % (datetime.now() - start_time))
 
@@ -2230,7 +2231,7 @@ class AIRIS(object):
                 try:
                     array = np.asarray(self.knowledge[str(action) + '/' + str(output) + '/aux_raw'])
                     value = model.aux_env[model.focus_index]
-                    while True:
+                    for i in range(self.assume_sample_size):
                         idx = (np.abs(array - value)).argmin()
                         assume_value = 'A' + str(array[idx])
 
@@ -2260,13 +2261,11 @@ class AIRIS(object):
                             model.best_condition_path = condition_heap[0][4]
                             heapq.heappop(condition_heap)
                             #print('Actual focus_value: ', model.focus_value, 'Assumed Value: ', assume_value)
-                            break
-                        elif len(array) > 0:
+
+                        if len(array) > 0:
                             array = np.delete(array, idx)
                             if len(array) == 0:
                                 break
-                        else:
-                            break
 
                 except KeyError:
                     pass
