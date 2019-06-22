@@ -3,6 +3,7 @@ import copy
 import numpy as np
 import heapq
 import random
+import time
 from operator import itemgetter
 from datetime import datetime
 from model import Model
@@ -54,7 +55,7 @@ class AIRIS(object):
         # output range of each action [min, max, increment size]
         self.action_output_list = action_output_list
         self.action_plan = []  # sequence of planned actions
-        self.action_plan_depth_limit = 200
+        self.action_plan_depth_limit = 100000
 
         self.goal_type_default = 'Random'
         self.goal_type = 'Random'
@@ -864,9 +865,17 @@ class AIRIS(object):
 
             while not self.goal_reached and base_model_heap and plan_depth <= self.action_plan_depth_limit:
 
-                if base_model_heap[0][2] != 0:
-                    break
-
+                if 0 < base_model_heap[0][2]:
+                    try:
+                        if self.models[base_model_heap[0][1]].best_condition_path is not None:
+                            if base_model_heap[0][2] > self.knowledge[self.models[base_model_heap[0][1]].best_condition_path + 'moe']:
+                                print (base_model_heap[0][2], self.knowledge[self.models[base_model_heap[0][1]].best_condition_path + 'moe'])
+                                interrupt = input()
+                                break
+                        else:
+                            break
+                    except KeyError:
+                        break
                 base_model = heapq.heappop(base_model_heap)[1]
                 plan_depth += 1
                 pprint (str(plan_depth) + ' / ' + str(self.action_plan_depth_limit), num_indents=num_indents + 1)
@@ -939,7 +948,7 @@ class AIRIS(object):
                     print('Insufficient knowledge to achieve: ')
                     print(self.goal_source,'where value =',self.goal_value)
                     if plan_depth > self.action_plan_depth_limit:
-                        #self.action_plan_depth_limit += 5
+                        self.action_plan_depth_limit += 5
                         print('Increasing plan depth to ',str(self.action_plan_depth_limit))
 
                     worst_condition.extend(new_condition)
@@ -1675,6 +1684,10 @@ class AIRIS(object):
             except:
                 pass
 
+        if not vis_change_found and not aux_change_found and model.best_condition_dif is not None:
+            if model.best_condition_dif > self.knowledge[model.best_condition_path + 'moe']:
+                self.knowledge[model.best_condition_path + 'moe'] = model.best_condition_dif
+
         pprint('Actual + Predicted Visual Change List:   \t\t%s' % self.vis_change_list,
             num_indents=num_indents + 2)
         pprint('Actual + Predicted Auxiliary Change List:\t\t%s' % self.aux_change_list,
@@ -1956,6 +1969,7 @@ class AIRIS(object):
                 self.knowledge[path + 'post_aux_data'] = copy.deepcopy(self.posterior_aux_env)
 
                 self.knowledge[path + 'rel_abs'] = 0
+                self.knowledge[path + 'moe'] = 0
 
                 # /vis_ref
                 for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list):
