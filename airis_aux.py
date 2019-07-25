@@ -4,6 +4,7 @@ import numpy as np
 import heapq
 import random
 import time
+import multiprocessing
 from operator import itemgetter
 from datetime import datetime
 from model import Model
@@ -55,7 +56,7 @@ class AIRIS(object):
         # output range of each action [min, max, increment size]
         self.action_output_list = action_output_list
         self.action_plan = []  # sequence of planned actions
-        self.action_plan_depth_limit = 100000
+        self.action_plan_depth_limit = 200
 
         self.goal_type_default = 'Random'
         self.goal_type = 'Random'
@@ -88,7 +89,7 @@ class AIRIS(object):
         self.display_hold = False
         self.display_plan = [0]
         self.round_to = 2
-        self.assume_sample_size = 10
+        self.assume_sample_size = 2
 
         pprint('initialization complete. duration: %s' % (datetime.now() - start_time))
 
@@ -865,7 +866,7 @@ class AIRIS(object):
 
             while not self.goal_reached and base_model_heap and plan_depth <= self.action_plan_depth_limit:
 
-                if 0 < base_model_heap[0][2]:
+                if base_model_heap[0][2] > 0:
                     try:
                         if self.models[base_model_heap[0][1]].best_condition_path is not None:
                             if base_model_heap[0][2] > self.knowledge[self.models[base_model_heap[0][1]].best_condition_path + 'moe']:
@@ -875,6 +876,9 @@ class AIRIS(object):
                         else:
                             break
                     except KeyError:
+                        print ('WHOA WAIT WHAT')
+                        print (self.models[base_model_heap[0][1]].best_condition_path)
+                        interrupt = input()
                         break
                 base_model = heapq.heappop(base_model_heap)[1]
                 plan_depth += 1
@@ -2245,11 +2249,11 @@ class AIRIS(object):
                 try:
                     array = np.asarray(self.knowledge[str(action) + '/' + str(output) + '/aux_raw'])
                     value = model.aux_env[model.focus_index]
+
                     for i in range(self.assume_sample_size):
                         idx = (np.abs(array - value)).argmin()
                         assume_value = 'A' + str(array[idx])
 
-                        pprint('Aux focus_value = ' + str(model.focus_value), num_indents=num_indents + 1)
                         condition_path = str(action) + '/' + str(output) + '/' + assume_value
                         try:
                             condition_list = self.knowledge[condition_path]
@@ -2289,6 +2293,7 @@ class AIRIS(object):
         pprint('model.best_condition_path = ' + str(model.best_condition_path), num_indents=num_indents + 1)
         pprint('difference found. duration: %s' % (datetime.now() - start_time),
             num_indents=1, new_line_start=True, draw_line=True)
+
 
     def save_knowledge(self):
         # Save
