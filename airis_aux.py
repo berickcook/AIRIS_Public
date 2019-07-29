@@ -2270,6 +2270,7 @@ class AIRIS(object):
 
                         if condition_heap:
                             if len(condition_heap) > 1:
+                                condition_heap.sort(key=self.first_key)
                                 if condition_heap[0][0] != condition_heap[1][0]:
                                     model.best_condition_dif = condition_heap[0][0]
                                     model.focus_value = condition_heap[0][1]
@@ -2278,8 +2279,7 @@ class AIRIS(object):
                                     model.best_condition_path = condition_heap[0][4]
 
                                 else:
-                                    found = False
-                                    while condition_heap[0][0] != condition_heap[1][0]:
+                                    while condition_heap[0][0] == condition_heap[1][0]:
                                         CheckPrev = [0, 0]
 
                                         for check in range(2):
@@ -2297,23 +2297,16 @@ class AIRIS(object):
                                                         break
 
                                         if CheckPrev[0] <= CheckPrev[1]:
-                                            model.best_condition_dif = condition_heap[0][0]
-                                            model.focus_value = condition_heap[0][1]
-                                            model.focus_index = condition_heap[0][2]
-                                            model.best_condition_id = condition_heap[0][3]
-                                            model.best_condition_path = condition_heap[0][4]
-                                            found = True
-                                            break
+                                            del condition_heap[1]
 
                                         else:
-                                            heapq.heappop(condition_heap)
+                                            del condition_heap[0]
 
-                                    if not found:
-                                        model.best_condition_dif = condition_heap[0][0]
-                                        model.focus_value = condition_heap[0][1]
-                                        model.focus_index = condition_heap[0][2]
-                                        model.best_condition_id = condition_heap[0][3]
-                                        model.best_condition_path = condition_heap[0][4]
+                                    model.best_condition_dif = condition_heap[0][0]
+                                    model.focus_value = condition_heap[0][1]
+                                    model.focus_index = condition_heap[0][2]
+                                    model.best_condition_id = condition_heap[0][3]
+                                    model.best_condition_path = condition_heap[0][4]
 
                             else:
                                 model.best_condition_dif = condition_heap[0][0]
@@ -2344,3 +2337,6 @@ class AIRIS(object):
     def load_knowledge(self):
         # Load
         self.knowledge = np.load('Knowledge.npy').item()
+
+    def first_key(self, val):
+        return val[0]
