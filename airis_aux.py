@@ -76,6 +76,7 @@ class AIRIS(object):
         self.vis_change_list = []
         self.aux_change_list = []
         self.vis_change_list_prev = []
+        self.aux_change_list_prev = []
 
         self.posterior_focus_value = None  #
         self.vis_change_index = None  # index of the visual change we're focusing on
@@ -1425,8 +1426,6 @@ class AIRIS(object):
         aux_prior_found = True
 
         # resetting self.vis_change_list and self.aux_change_list
-        if self.vis_change_list:
-            self.vis_change_list_prev = self.vis_change_list
         self.vis_change_list = []
         self.aux_change_list = []
 
@@ -1755,16 +1754,7 @@ class AIRIS(object):
                 # want to store that lack of change in the knowledge,
                 # but since there's no change_lists
                 if self.goal_type == 'New Action' and not self.vis_change_list:
-                    '''if self.vis_change_list_prev:
-                        for _, _, prior_val, _ in self.vis_change_list_prev:
-                            if prior_val == least_frequent_val:
-                                condition_focus_value = least_frequent_val
-                                self.vis_change_index = None
-                                self.posterior_focus_value = least_frequent_val
-                                x, y = vis_env_pos[least_frequent_val]
-                                self.goal_type = 'Random'
-                                self.focus_global_set.add(least_frequent_val)
-                                break'''
+
                     if least_frequent_val in self.focus_global_set:
                         condition_focus_value = least_frequent_val
                         self.vis_change_index = None
@@ -1975,6 +1965,10 @@ class AIRIS(object):
                 self.knowledge[path + 'rel_abs'] = 0
                 self.knowledge[path + 'moe'] = 0
 
+                # /vis_ref_prev
+                self.knowledge[path + 'vis_ref_prev'] = self.vis_change_list_prev
+                self.knowledge[path + 'aux_ref_prev'] = self.aux_change_list_prev
+
                 # /vis_ref
                 for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list):
                     if i != self.vis_change_index:
@@ -1999,12 +1993,15 @@ class AIRIS(object):
 
             else:
                 print('DUPLICATE KNOWLEDGE')
+                self.condition_id -= 1
 
         else:
             pprint('not updating knowledge, no condition_focus_value',
                 num_indents=num_indents, new_line_start=True)
 
         self.print_knowledge(num_indents=num_indents + 1, new_line_start=True)
+        self.vis_change_list_prev = self.vis_change_list
+        self.aux_change_list_prev = self.aux_change_list
 
         #self.save_knowledge()
 
@@ -2272,13 +2269,58 @@ class AIRIS(object):
                                 heapq.heappush(condition_heap, (round(condition_dif, self.round_to), 'A' + str(model.aux_env[model.focus_index]), model.focus_index, condition_id, data_path))
 
                         if condition_heap:
-                            model.best_condition_dif = condition_heap[0][0]
-                            model.focus_value = condition_heap[0][1]
-                            model.focus_index = condition_heap[0][2]
-                            model.best_condition_id = condition_heap[0][3]
-                            model.best_condition_path = condition_heap[0][4]
-                            heapq.heappop(condition_heap)
-                            #print('Actual focus_value: ', model.focus_value, 'Assumed Value: ', assume_value)
+                            if len(condition_heap) > 1:
+                                if condition_heap[0][0] != condition_heap[1][0]:
+                                    model.best_condition_dif = condition_heap[0][0]
+                                    model.focus_value = condition_heap[0][1]
+                                    model.focus_index = condition_heap[0][2]
+                                    model.best_condition_id = condition_heap[0][3]
+                                    model.best_condition_path = condition_heap[0][4]
+
+                                else:
+                                    found = False
+                                    while condition_heap[0][0] != condition_heap[1][0]:
+                                        CheckPrev = [0, 0]
+
+                                        for check in range(2):
+                                            data_path = condition_heap[check][4]
+
+                                            for item in self.vis_change_list:
+                                                if item not in self.knowledge[data_path + 'vis_ref_prev']:
+                                                    CheckPrev[check] += 1
+
+                                            for item in self.aux_change_list:
+                                                for rule in self.knowledge[data_path + 'aux_ref_prev']:
+                                                    if item[0] == rule[0]:
+                                                        CheckPrev[check] += abs(item[1] - rule[1])
+                                                        CheckPrev[check] += abs(item[2] - rule[2])
+                                                        break
+
+                                        if CheckPrev[0] <= CheckPrev[1]:
+                                            model.best_condition_dif = condition_heap[0][0]
+                                            model.focus_value = condition_heap[0][1]
+                                            model.focus_index = condition_heap[0][2]
+                                            model.best_condition_id = condition_heap[0][3]
+                                            model.best_condition_path = condition_heap[0][4]
+                                            found = True
+                                            break
+
+                                        else:
+                                            heapq.heappop(condition_heap)
+
+                                    if not found:
+                                        model.best_condition_dif = condition_heap[0][0]
+                                        model.focus_value = condition_heap[0][1]
+                                        model.focus_index = condition_heap[0][2]
+                                        model.best_condition_id = condition_heap[0][3]
+                                        model.best_condition_path = condition_heap[0][4]
+
+                            else:
+                                model.best_condition_dif = condition_heap[0][0]
+                                model.focus_value = condition_heap[0][1]
+                                model.focus_index = condition_heap[0][2]
+                                model.best_condition_id = condition_heap[0][3]
+                                model.best_condition_path = condition_heap[0][4]
 
                         if len(array) > 0:
                             array = np.delete(array, idx)
