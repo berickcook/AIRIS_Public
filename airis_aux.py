@@ -2302,6 +2302,9 @@ class AIRIS(object):
                                         else:
                                             del condition_heap[0]
 
+                                        if len(condition_heap) == 1:
+                                            break
+
                                     model.best_condition_dif = condition_heap[0][0]
                                     model.focus_value = condition_heap[0][1]
                                     model.focus_index = condition_heap[0][2]
