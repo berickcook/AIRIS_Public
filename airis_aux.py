@@ -89,7 +89,7 @@ class AIRIS(object):
         self.worst_set = set()
         self.display_hold = False
         self.display_plan = [0]
-        self.round_to = 2
+        self.round_to = 1
         self.assume_sample_size = 2
 
         pprint('initialization complete. duration: %s' % (datetime.now() - start_time))
@@ -1932,6 +1932,14 @@ class AIRIS(object):
                                 duplicate = False
                                 break
 
+                    for item in self.vis_change_list:
+                        if item not in self.knowledge[dup_path + 'vis_ref_prev']:
+                            duplicate = False
+
+                    for item in self.aux_change_list:
+                        if item not in self.knowledge[dup_path + 'aux_ref_prev']:
+                            duplicate = False
+
                     if duplicate:
                         break
             except KeyError:
@@ -2301,6 +2309,9 @@ class AIRIS(object):
 
                                         else:
                                             del condition_heap[0]
+
+                                        if len(condition_heap) == 1:
+                                            break
 
                                     model.best_condition_dif = condition_heap[0][0]
                                     model.focus_value = condition_heap[0][1]
