@@ -1888,22 +1888,29 @@ class AIRIS(object):
                     dup_path = path + '/' + cond + '/'
                     if self.knowledge[dup_path + 'posterior_val'] != self.posterior_focus_value:
                         duplicate = False
+                        continue
+
                     if A == '':
                         if self.knowledge[dup_path + 'focus_x'] != focus_x:
                             duplicate = False
+                            continue
                         if self.knowledge[dup_path + 'focus_y'] != focus_y:
                             duplicate = False
+                            continue
                     else:
                         if self.knowledge[dup_path + 'focus_i'] != focus_index:
                             duplicate = False
+                            continue
                     vis_data_array = array_dif(self.knowledge[dup_path + 'vis_data'], copy.deepcopy(self.prior_vis_env))
                     dupx, dupy = np.nonzero(vis_data_array)
                     if len(dupx) or len(dupy):
                         duplicate = False
+                        continue
                     aux_data_array = array_dif(self.knowledge[dup_path + 'aux_data'], copy.deepcopy(self.prior_aux_env))
                     dupi, = np.nonzero(aux_data_array)
                     if len(dupi):
                         duplicate = False
+                        continue
 
                     for i, (x, y, prior_val, posterior_val) in enumerate(self.vis_change_list):
                         if i != self.vis_change_index:
@@ -1917,6 +1924,9 @@ class AIRIS(object):
                             except KeyError:
                                 duplicate = False
                                 break
+
+                    if not duplicate:
+                        continue
 
                     # /aux_ref
                     for i, prior_val, posterior_val in self.aux_change_list:
@@ -1932,13 +1942,24 @@ class AIRIS(object):
                                 duplicate = False
                                 break
 
-                    for item in self.vis_change_list:
-                        if item not in self.knowledge[dup_path + 'vis_ref_prev']:
-                            duplicate = False
+                    if not duplicate:
+                        continue
 
-                    for item in self.aux_change_list:
-                        if item not in self.knowledge[dup_path + 'aux_ref_prev']:
+                    for item in self.knowledge[dup_path + 'vis_ref_prev']:
+                        if item not in self.vis_change_list:
                             duplicate = False
+                            break
+
+                    if not duplicate:
+                        continue
+
+                    for item in self.knowledge[dup_path + 'aux_ref_prev']:
+                        if item not in self.aux_change_list:
+                            duplicate = False
+                            break
+
+                    if not duplicate:
+                        continue
 
                     if duplicate:
                         break
@@ -2347,7 +2368,7 @@ class AIRIS(object):
 
     def load_knowledge(self):
         # Load
-        self.knowledge = np.load('Knowledge.npy').item()
+        self.knowledge = np.load('Knowledge.npy', allow_pickle=True).item()
 
     def first_key(self, val):
         return val[0]
