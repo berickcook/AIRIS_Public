@@ -29,6 +29,8 @@ class Model(object):
         self.best_condition_dif = None
         self.best_condition_id = None
         self.best_condition_path = None
+        self.best_condition_assume_value = None
+        self.best_condition_original_value = None
         self.source_condition_path = None
         self.depth = 0
 

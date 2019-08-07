@@ -89,7 +89,7 @@ class AIRIS(object):
         self.worst_set = set()
         self.display_hold = False
         self.display_plan = [0]
-        self.round_to = 1
+        self.round_to = 2
         self.assume_sample_size = 2
 
         pprint('initialization complete. duration: %s' % (datetime.now() - start_time))
@@ -1312,11 +1312,14 @@ class AIRIS(object):
 
             if is_aux[0] == 'A':
                 predicted_posterior_value = self.knowledge[path + 'posterior_val']
-                model.update_aux_value(predicted_posterior_value, model.focus_index)
+                if model.best_condition_assume_value is not None:
+                    model.update_aux_value(model.best_condition_original_value +(predicted_posterior_value - model.best_condition_original_value), model.focus_index)
+                else:
+                    model.update_aux_value(predicted_posterior_value, model.focus_index)
 
             else:
-                predicted_posterior_val = self.knowledge[path + 'posterior_val']
-                model.update_vis_value(predicted_posterior_val, model.focus_pos)
+                predicted_posterior_value = self.knowledge[path + 'posterior_val']
+                model.update_vis_value(predicted_posterior_value, model.focus_pos)
 
             try:
                 predict_vis_ref = self.knowledge[path + 'vis_ref']
@@ -1493,8 +1496,8 @@ class AIRIS(object):
                             check_model.update_aux_value(predicted_posterior_value, check_model.focus_index)
 
                         else:
-                            predicted_posterior_val = self.knowledge[path + 'posterior_val']
-                            check_model.update_vis_value(predicted_posterior_val, check_model.focus_pos)
+                            predicted_posterior_value = self.knowledge[path + 'posterior_val']
+                            check_model.update_vis_value(predicted_posterior_value, check_model.focus_pos)
 
                         pprint('checking ABS 3', num_indents=num_indents + 2)
 
@@ -2295,62 +2298,77 @@ class AIRIS(object):
                                 condition_dif = np.sum(array_dif(vis_model, condition_data_array))
                                 condition_dif += np.sum(array_dif(aux_model, condition_aux_data_array))
 
-                                heapq.heappush(condition_heap, (round(condition_dif, self.round_to), 'A' + str(model.aux_env[model.focus_index]), model.focus_index, condition_id, data_path))
-
-                        if condition_heap:
-                            if len(condition_heap) > 1:
-                                condition_heap.sort(key=self.first_key)
-                                if condition_heap[0][0] != condition_heap[1][0]:
-                                    model.best_condition_dif = condition_heap[0][0]
-                                    model.focus_value = condition_heap[0][1]
-                                    model.focus_index = condition_heap[0][2]
-                                    model.best_condition_id = condition_heap[0][3]
-                                    model.best_condition_path = condition_heap[0][4]
-
-                                else:
-                                    while condition_heap[0][0] == condition_heap[1][0]:
-                                        CheckPrev = [0, 0]
-
-                                        for check in range(2):
-                                            data_path = condition_heap[check][4]
-
-                                            for item in self.vis_change_list:
-                                                if item not in self.knowledge[data_path + 'vis_ref_prev']:
-                                                    CheckPrev[check] += 1
-
-                                            for item in self.aux_change_list:
-                                                for rule in self.knowledge[data_path + 'aux_ref_prev']:
-                                                    if item[0] == rule[0]:
-                                                        CheckPrev[check] += abs(item[1] - rule[1])
-                                                        CheckPrev[check] += abs(item[2] - rule[2])
-                                                        break
-
-                                        if CheckPrev[0] <= CheckPrev[1]:
-                                            del condition_heap[1]
-
-                                        else:
-                                            del condition_heap[0]
-
-                                        if len(condition_heap) == 1:
-                                            break
-
-                                    model.best_condition_dif = condition_heap[0][0]
-                                    model.focus_value = condition_heap[0][1]
-                                    model.focus_index = condition_heap[0][2]
-                                    model.best_condition_id = condition_heap[0][3]
-                                    model.best_condition_path = condition_heap[0][4]
-
-                            else:
-                                model.best_condition_dif = condition_heap[0][0]
-                                model.focus_value = condition_heap[0][1]
-                                model.focus_index = condition_heap[0][2]
-                                model.best_condition_id = condition_heap[0][3]
-                                model.best_condition_path = condition_heap[0][4]
+                                heapq.heappush(condition_heap, (round(condition_dif, self.round_to), 'A' + str(model.aux_env[model.focus_index]), model.focus_index, condition_id, data_path, assume_value))
 
                         if len(array) > 0:
                             array = np.delete(array, idx)
                             if len(array) == 0:
                                 break
+
+                    if condition_heap:
+                        if len(condition_heap) > 1:
+                            condition_heap.sort(key=self.first_key)
+                            if condition_heap[0][0] != condition_heap[1][0]:
+                                model.best_condition_dif = condition_heap[0][0]
+                                model.focus_value = condition_heap[0][1]
+                                model.focus_index = condition_heap[0][2]
+                                model.best_condition_id = condition_heap[0][3]
+                                model.best_condition_path = condition_heap[0][4]
+                                if condition_heap[0][5] != value:
+                                    model.best_condition_assume_value = condition_heap[0][5]
+                                    model.best_condition_original_value = value
+                                else:
+                                    model.best_condition_assume_value = None
+
+                            else:
+                                while condition_heap[0][0] == condition_heap[1][0]:
+                                    CheckPrev = [0, 0]
+
+                                    for check in range(2):
+                                        data_path = condition_heap[check][4]
+
+                                        for item in self.vis_change_list:
+                                            if item not in self.knowledge[data_path + 'vis_ref_prev']:
+                                                CheckPrev[check] += 1
+
+                                        for item in self.aux_change_list:
+                                            for rule in self.knowledge[data_path + 'aux_ref_prev']:
+                                                if item[0] == rule[0]:
+                                                    CheckPrev[check] += abs(item[1] - rule[1])
+                                                    CheckPrev[check] += abs(item[2] - rule[2])
+                                                    break
+
+                                    if CheckPrev[0] <= CheckPrev[1]:
+                                        del condition_heap[1]
+
+                                    else:
+                                        del condition_heap[0]
+
+                                    if len(condition_heap) == 1:
+                                        break
+
+                                model.best_condition_dif = condition_heap[0][0]
+                                model.focus_value = condition_heap[0][1]
+                                model.focus_index = condition_heap[0][2]
+                                model.best_condition_id = condition_heap[0][3]
+                                model.best_condition_path = condition_heap[0][4]
+                                if condition_heap[0][5] != value:
+                                    model.best_condition_assume_value = condition_heap[0][5]
+                                    model.best_condition_original_value = value
+                                else:
+                                    model.best_condition_assume_value = None
+
+                        else:
+                            model.best_condition_dif = condition_heap[0][0]
+                            model.focus_value = condition_heap[0][1]
+                            model.focus_index = condition_heap[0][2]
+                            model.best_condition_id = condition_heap[0][3]
+                            model.best_condition_path = condition_heap[0][4]
+                            if condition_heap[0][5] != value:
+                                model.best_condition_assume_value = condition_heap[0][5]
+                                model.best_condition_original_value = value
+                            else:
+                                model.best_condition_assume_value = None
 
                 except KeyError:
                     pass

@@ -51,6 +51,7 @@ if __name__ == '__main__':
     done = False
     run_total = 0
     round_to = 2
+    dupes = 0
 
     for i in range(episode_count):
         ob = env.reset()
@@ -66,8 +67,9 @@ if __name__ == '__main__':
             episode_score += reward
             if action is not None:
                 agent.airis.capture_input([[0]], [round(ob[2], round_to), round(ob[1], round_to), 0, round(ob[3], round_to)], action, prior=False)
+
             if i > 0:
-                print(action, [round(ob[2], round_to), round(ob[1], round_to), 0, round(ob[3], round_to)], reward, done, i, run_total / i, 'batch: ', 'single run', 'duration: ', str(time.time() - start_time), agent.airis.knowledge['last condition id'])
+                print(action, [round(ob[2], round_to), round(ob[1], round_to), 0, round(ob[3], round_to)], reward, done, i, run_total / i, 'batch: ', 'single run', 'duration: ', str(time.time() - start_time), agent.airis.knowledge['last condition id'], 'dupes:')
             if done:
                 print('episode score: ', episode_score)
                 break
@@ -79,7 +81,7 @@ if __name__ == '__main__':
     run_total += episode_score
     # Close the env and write monitor result info to disk
     print('average score: ', run_total, run_total / 100)
-    with open('cartpole_NoCartPos_2Rounded_200Depth_NoDupe_FixedGoal_2Assume_moe_PrevCheck.txt', 'a') as file:
+    with open('cartpole_NoCartPos_2Rounded_200Depth_NoDupe_FixedGoal_2Assume_moe_PrevCheck_Optimized_relative.txt', 'a') as file:
         file.write(str(run_total / 100)+' | '+str(time.time() - start_time)+' | '+str(agent.airis.knowledge['last condition id'])+'\n')
     agent.airis.save_knowledge()
 
