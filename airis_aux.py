@@ -1313,7 +1313,7 @@ class AIRIS(object):
             if is_aux[0] == 'A':
                 predicted_posterior_value = self.knowledge[path + 'posterior_val']
                 if model.best_condition_assume_value is not None:
-                    model.update_aux_value(model.best_condition_original_value +(predicted_posterior_value - model.best_condition_original_value), model.focus_index)
+                    model.update_aux_value(model.best_condition_original_value +(predicted_posterior_value - model.best_condition_assume_value), model.focus_index)
                 else:
                     model.update_aux_value(predicted_posterior_value, model.focus_index)
 
@@ -1347,7 +1347,10 @@ class AIRIS(object):
                 predict_aux_ref = []
 
             for i, prior_val, posterior_val in predict_aux_ref:
-                model.update_aux_value(posterior_val, i)
+                if model.best_condition_assume_value is not None:
+                    model.update_aux_value(model.aux_env[i] + (posterior_val - prior_val), i)
+                else:
+                    model.update_aux_value(posterior_val, i)
 
             # Update focus value if previous models focus value no longer exists
             if not focus_found:
