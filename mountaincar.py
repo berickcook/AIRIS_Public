@@ -44,46 +44,43 @@ if __name__ == '__main__':
     env.seed(0)
     agent = AIAgent(env.action_space)
     result_data = []
-    round_to = 6
+    round_to = 3
 
-    for n in range(100):
 
-        episode_count = 100
-        episode_score = 0
-        reward = 0
-        done = False
+    episode_count = 100
+    episode_score = 0
+    reward = 0
+    done = False
 
-        for i in range(episode_count):
-            ob = env.reset()
-            episode_score = 0
-            start_time = time.time()
-            best_loc_high = None
-            best_loc_low = None
-            while True:
-                action, _, _ = agent.airis.capture_input([[0]], [round(ob[0], round_to), round(ob[1], round_to)], 0, prior=True)
-                if action is None:
-                    action = 1
-                    print ('AI took no action')
-                ob, reward, done, _ = env.step(action)
-                episode_score += reward
-                if best_loc_high is None or round(ob[0], round_to) > best_loc_high:
-                    best_loc_high = round(ob[0], round_to)
-                if best_loc_low is None or round(ob[0], round_to) < best_loc_low:
-                    best_loc_low = round(ob[0], round_to)
-                if action is not None:
-                    agent.airis.capture_input([[0]], [round(ob[0], round_to), round(ob[1], round_to)], action, prior=False)
-                print(action, ob, reward, done, i, episode_score, best_loc_low, best_loc_high, result_data)
-                if done:
-                    print('episode score: ', episode_score)
-                    result_data.append((episode_score, best_loc_low, best_loc_high))
-                    break
-                env.render()
-                # Note there's no env.render() here. But the environment still can open window and
-                # render if asked by env.monitor: it calls env.render('rgb_array') to record video.
-                # Video is not recorded every episode, see capped_cubic_video_schedule for details.
+    ob = env.reset()
+    episode_score = 0
+    start_time = time.time()
+    best_loc_high = None
+    best_loc_low = None
+    while True:
+        action, _, _ = agent.airis.capture_input([[0]], [round(ob[0], round_to), round(ob[1], round_to)], 0, prior=True)
+        if action is None:
+            action = 1
+            print ('AI took no action')
+        ob, reward, done, _ = env.step(action)
+        episode_score += reward
+        if best_loc_high is None or round(ob[0], round_to) > best_loc_high:
+            best_loc_high = round(ob[0], round_to)
+        if best_loc_low is None or round(ob[0], round_to) < best_loc_low:
+            best_loc_low = round(ob[0], round_to)
+        if action is not None:
+            agent.airis.capture_input([[0]], [round(ob[0], round_to), round(ob[1], round_to)], action, prior=False)
+        print(action, ob, reward, done, episode_score, best_loc_low, best_loc_high, str(time.time()-start_time), agent.airis.knowledge['last condition id'])
+        if done:
+            print('episode score: ', episode_score)
+            result_data.append((episode_score, best_loc_low, best_loc_high))
+            break
+        # Note there's no env.render() here. But the environment still can open window and
+        # render if asked by env.monitor: it calls env.render('rgb_array') to record video.
+        # Video is not recorded every episode, see capped_cubic_video_schedule for details.
 
-            with open('MountainCar_6Rounded_NoDupe_FixedGoal_200Depth_Assume.txt', 'a') as file:
-                file.write(str(episode_score)+' | '+str(best_loc_low)+' | '+str(best_loc_high)+' | '+str(time.time() - start_time)+'\n')
-            agent.airis.save_knowledge()
+    with open('MountainCar_3Rounded_NoDupe_FixedGoal_200Depth_Assume_Relative.txt', 'a') as file:
+        file.write(str(episode_score)+' | '+str(best_loc_low)+' | '+str(best_loc_high)+' | '+str(time.time() - start_time)+' | '+str(agent.airis.knowledge['last condition id'])+'\n')
+    agent.airis.save_knowledge()
 
     env.close()
