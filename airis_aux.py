@@ -56,7 +56,7 @@ class AIRIS(object):
         # output range of each action [min, max, increment size]
         self.action_output_list = action_output_list
         self.action_plan = []  # sequence of planned actions
-        self.action_plan_depth_limit = 200
+        self.action_plan_depth_limit = 2000
 
         self.goal_type_default = 'Random'
         self.goal_type = 'Random'
@@ -89,7 +89,7 @@ class AIRIS(object):
         self.worst_set = set()
         self.display_hold = False
         self.display_plan = [0]
-        self.round_to = 2
+        self.round_to = 3
         self.assume_sample_size = 2
 
         pprint('initialization complete. duration: %s' % (datetime.now() - start_time))
@@ -867,23 +867,23 @@ class AIRIS(object):
 
             while not self.goal_reached and base_model_heap and plan_depth <= self.action_plan_depth_limit:
 
-                if base_model_heap[0][2] > 0:
-                    try:
-                        if self.models[base_model_heap[0][1]].best_condition_path is not None:
-                            if base_model_heap[0][2] > self.knowledge[self.models[base_model_heap[0][1]].best_condition_path + 'moe']:
-                                print (base_model_heap[0][2], self.knowledge[self.models[base_model_heap[0][1]].best_condition_path + 'moe'])
-                                interrupt = input()
-                                break
-                        else:
-                            break
-                    except KeyError:
-                        print ('WHOA WAIT WHAT')
-                        print (self.models[base_model_heap[0][1]].best_condition_path)
-                        interrupt = input()
-                        break
+                # if base_model_heap[0][2] > 0:
+                #     try:
+                #         if self.models[base_model_heap[0][1]].best_condition_path is not None:
+                #             if base_model_heap[0][2] > self.knowledge[self.models[base_model_heap[0][1]].best_condition_path + 'moe']:
+                #                 print(base_model_heap[0][2], self.knowledge[self.models[base_model_heap[0][1]].best_condition_path + 'moe'])
+                #                 interrupt = input()
+                #                 break
+                #         else:
+                #             break
+                #     except KeyError:
+                #         print ('WHOA WAIT WHAT')
+                #         print (self.models[base_model_heap[0][1]].best_condition_path)
+                #         interrupt = input()
+                #         break
                 base_model = heapq.heappop(base_model_heap)[1]
                 plan_depth += 1
-                pprint (str(plan_depth) + ' / ' + str(self.action_plan_depth_limit), num_indents=num_indents + 1)
+                pprint(str(plan_depth) + ' / ' + str(self.action_plan_depth_limit), num_indents=num_indents + 1)
                 for action_index, try_action in enumerate(self.action_space):
                     if not self.goal_reached:
                         for try_output in range(self.action_output_list[action_index][0], self.action_output_list[action_index][1], self.action_output_list[action_index][2]):
@@ -910,7 +910,9 @@ class AIRIS(object):
                                 model_env = np.array_str(model.vis_env) \
                                           + np.array_str(model.aux_env)
                                 if model_env not in model_set:
-                                    heapq.heappush(base_model_heap, (model.compare + model.depth, self.current_model_index, worst_dif))
+                                    #heapq.heappush(base_model_heap, (model.compare + model.depth, self.current_model_index, worst_dif))
+                                    heapq.heappush(base_model_heap,
+                                                   (self.current_model_index, self.current_model_index, worst_dif))
                                     heapq.heappush(model_compare_heap, (model.compare, self.current_model_index))
                                     model_set.add(model_env)
                                 if model.compare == 0:
