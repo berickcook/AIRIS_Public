@@ -56,7 +56,7 @@ class AIRIS(object):
         # output range of each action [min, max, increment size]
         self.action_output_list = action_output_list
         self.action_plan = []  # sequence of planned actions
-        self.action_plan_depth_limit = 2000
+        self.action_plan_depth_limit = 200
 
         self.goal_type_default = 'Random'
         self.goal_type = 'Random'
@@ -89,7 +89,7 @@ class AIRIS(object):
         self.worst_set = set()
         self.display_hold = False
         self.display_plan = [0]
-        self.round_to = 3
+        self.round_to = 2
         self.assume_sample_size = 2
 
         pprint('initialization complete. duration: %s' % (datetime.now() - start_time))
@@ -910,9 +910,9 @@ class AIRIS(object):
                                 model_env = np.array_str(model.vis_env) \
                                           + np.array_str(model.aux_env)
                                 if model_env not in model_set:
-                                    #heapq.heappush(base_model_heap, (model.compare + model.depth, self.current_model_index, worst_dif))
-                                    heapq.heappush(base_model_heap,
-                                                   (self.current_model_index, self.current_model_index, worst_dif))
+                                    heapq.heappush(base_model_heap, (model.compare + model.depth, self.current_model_index, worst_dif))
+                                    # heapq.heappush(base_model_heap,
+                                    #                (self.current_model_index, self.current_model_index, worst_dif))
                                     heapq.heappush(model_compare_heap, (model.compare, self.current_model_index))
                                     model_set.add(model_env)
                                 if model.compare == 0:
@@ -1574,7 +1574,7 @@ class AIRIS(object):
                     pprint ('NOT ABS', num_indents=num_indents + 1, new_line_start=True)
                     self.knowledge[model.source_condition_path + 'rel_abs'] = 1
                     vis_change_found = False
-                    self.action_plan = []
+                    #self.action_plan = []
 
             else:
                 vis_change_found = False
@@ -1691,7 +1691,7 @@ class AIRIS(object):
             try:
                 self.knowledge[model.source_condition_path + 'rel_abs'] = -1
                 vis_change_found = False
-                self.action_plan = []
+                #self.action_plan = []
             except:
                 pass
 
@@ -1736,7 +1736,7 @@ class AIRIS(object):
         self.print_condition_id(num_indents=num_indents + 1, new_line_start=True)
 
         # clear the action plan
-        self.action_plan = []
+        #self.action_plan = []
 
         # if there were visual differences or there was a New Action (without changes)
         if self.vis_change_list or (self.goal_type == 'New Action' and not self.aux_change_list):
