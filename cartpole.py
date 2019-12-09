@@ -72,12 +72,11 @@ if __name__ == '__main__':
                     agent.airis.capture_input([[0]], [1, round(ob[1], round_to), round(ob[0], round_to), round(ob[3], round_to)], action, prior=False)
 
             if i > 0:
-                print(action, [round(ob[2], round_to), round(ob[1], round_to), round(ob[0], round_to), round(ob[3], round_to)], reward, done, i, run_total / i, 'batch: ', 'single run', 'duration: ', str(time.time() - start_time), agent.airis.knowledge['last condition id'], 'dupes:')
+                print(action, [round(ob[2], round_to), round(ob[1], round_to), round(ob[0], round_to), round(ob[3], round_to)], reward, done, i, run_total / i, 'duration: ', str(time.time() - start_time), agent.airis.knowledge['last condition id'])
             if done:
                 print('episode score: ', episode_score)
                 break
 
-            env.render()
             # Note there's no env.render() here. But the environment still can open window and
             # render if asked by env.monitor: it calls env.render('rgb_array') to record video.
             # Video is not recorded every episode, see capped_cubic_video_schedule for details.
@@ -85,7 +84,7 @@ if __name__ == '__main__':
     run_total += episode_score
     # Close the env and write monitor result info to disk
     print('average score: ', run_total, run_total / 100)
-    with open('cartpole_2Rounded_200Depth_NoDupe_FixedGoal_2Assume_moe_PrevCheck_Optimized_relative_NoInterrupt_2.txt', 'a') as file:
+    with open('cartpole_2Rounded_200Depth_FixedNoDupe_FixedGoal_2Assume_moe_PrevCheck_Optimized_relative_NoInterrupt.txt', 'a') as file:
         file.write(str(run_total / 100)+' | '+str(time.time() - start_time)+' | '+str(agent.airis.knowledge['last condition id'])+'\n')
     agent.airis.save_knowledge()
 

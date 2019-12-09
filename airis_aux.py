@@ -39,6 +39,7 @@ class AIRIS(object):
         except:
             self.knowledge = {}
             self.knowledge['action set'] = set()
+            self.knowledge['last condition id'] = 0
             self.condition_id = 0  # id of condition in the knowledge
 
         # list of all models AIRIS has made
@@ -968,7 +969,7 @@ class AIRIS(object):
                             condition_aux_data_array = self.knowledge[path + 'aux_data']
                             raw_dif = np.sum(array_dif(self.models[index].vis_env, condition_data_array))
                             raw_dif += np.sum(array_dif(self.models[index].aux_env, condition_aux_data_array))
-                            worst_condition[i] = (dif, index, id, compare, act, out, raw_dif, focus, current)
+                            worst_condition[i] = (dif, index, id, compare, act, out, round(raw_dif, 2), focus, current)
 
                     worst_condition_prune = copy.deepcopy(worst_condition)
 
@@ -1954,7 +1955,7 @@ class AIRIS(object):
                         continue
 
                     for item in self.knowledge[dup_path + 'vis_ref_prev']:
-                        if item not in self.vis_change_list:
+                        if item not in self.vis_change_list_prev:
                             duplicate = False
                             break
 
@@ -1962,7 +1963,7 @@ class AIRIS(object):
                         continue
 
                     for item in self.knowledge[dup_path + 'aux_ref_prev']:
-                        if item not in self.aux_change_list:
+                        if item not in self.aux_change_list_prev:
                             duplicate = False
                             break
 
