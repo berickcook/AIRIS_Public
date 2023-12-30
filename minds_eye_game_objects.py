@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import *
 import time
-from constants import *
+from minds_eye_constants import *
 
 
 class GameObject(object):

@@ -1,10 +1,9 @@
 import pygame
-import time, sys, csv
+import time, sys, os, csv
 from pygame.locals import QUIT, KEYDOWN
 from game_objects import *
-from airis_stable import AIRIS
 from constants import *
-from other_useful_functions import pprint
+from airis_stable import AIRIS
 import datetime
 
 
@@ -21,13 +20,8 @@ class PyGameView(object):
 
         self.show_view = True # toggle display
         self.show_controls = False # toggle control display
-        self.mind_index_prev = 0
-        self.rep_map = []
-        w, h = GAME_MAP_GRID
-        for x in range(w):
-            self.rep_map.append([])
-            for y in range(h):
-                self.rep_map[x].append(0)
+        self.counter = len(os.listdir('./screens'))
+        self.log = 0
 
     def draw(self):
 
@@ -47,6 +41,7 @@ class PyGameView(object):
 
         # update display
         pygame.display.update()
+        self.counter += 1
 
     def draw_game_map(self):
 
@@ -66,64 +61,11 @@ class PyGameView(object):
         w, h = REP_MAP_GRID # number of positions wide and high
         ms = REP_MAP_START
 
-        if not self.model.controller.bypass and self.model.airis.display_hold:
-            self.model.controller.mind_len = len(self.model.airis.display_plan)
-            if self.mind_index_prev != self.model.controller.mind_index:
-                print('Viewing plan step ' + str(self.model.controller.mind_index) + ' of ' + str(
-                    self.model.controller.mind_len - 1) + ' (predicted result)')
-                self.mind_index_prev = self.model.controller.mind_index
-
-            # draw each position in the grid
-            try:
-                for x in range(w):
-                    for y in range(h):
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 0:
-                            self.rep_map[x][y] = self.model.floor
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 1:
-                            self.rep_map[x][y] = self.model.character
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 2:
-                            self.rep_map[x][y] = self.model.wall
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 3:
-                            self.rep_map[x][y] = self.model.battery
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 4:
-                            self.rep_map[x][y] = self.model.door
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 5:
-                            self.rep_map[x][y] = self.model.key
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 6:
-                            self.rep_map[x][y] = self.model.extinguisher
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 7:
-                            self.rep_map[x][y] = self.model.fire
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 8:
-                            self.rep_map[x][y] = self.model.right_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 9:
-                            self.rep_map[x][y] = self.model.left_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 10:
-                            self.rep_map[x][y] = self.model.down_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 11:
-                            self.rep_map[x][y] = self.model.up_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 12:
-                            self.rep_map[x][y] = self.model.open_door
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 13:
-                            self.rep_map[x][y] = self.model.character_on_right_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 14:
-                            self.rep_map[x][y] = self.model.character_on_left_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 15:
-                            self.rep_map[x][y] = self.model.character_on_down_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 16:
-                            self.rep_map[x][y] = self.model.character_on_up_arrow
-                        if self.model.airis.models[self.model.airis.display_plan[self.model.controller.mind_index]].vis_env[x][y] == 17:
-                            self.rep_map[x][y] = self.model.character_on_open_door
-
-                        self.rep_map[x][y].draw_representation_image(self, x, y)
-
-
-            except:
-                pass
-        else:
-            for x in range(w):
-                for y in range(h):
-                    if self.model.change_in_game_map[x][y]:
-                        self.model.game_map[x][y].draw_representation_image(self, x, y)
+        # draw each position in the grid
+        for x in range(w):
+            for y in range(h):
+                if self.model.change_in_game_map[x][y]:
+                    self.model.game_map[x][y].draw_representation_image(self, x, y)
 
     def draw_text(self, text, x, y, size, color = (100, 100, 100)):
         basicfont = pygame.font.SysFont(None, size)
@@ -156,88 +98,103 @@ class Model(object):
         self.make_singletons()
         self.current_maze = 0
         self.get_next_maze()
-        self.player_action = "up"
-        
+        self.plan_made = False
+        self.player_action = None
+        self.state = None
+        self.final_action_step = False
+
         # AGI setup
         self.screen_input = []
         for x in range(GAME_MAP_GRID[0]):
             self.screen_input.append([])
             for y in range(GAME_MAP_GRID[1]):
                 self.screen_input[x].append(0.0)
-        self.aux_input = [self.keys_collected, self.extinguishers_collected]
-        action_space = ['up', 'down', 'left', 'right', 'nothing']
-        #action_output_list = output range of each action [min, max, increment size]
-        action_output_list = [
-            [1, 2, 1],
-            [1, 2, 1],
-            [1, 2, 1],
-            [1, 2, 1],
-            [1, 2, 1]
-        ]
-        self.airis = AIRIS(self.screen_input, self.aux_input, action_space, action_output_list)
-        self.airis_controlled = airis_controlled
-        if not airis_controlled:
-            self.airis.goal_type = 'Observe'
-            self.airis.goal_type_default = 'Observe'
+        self.aux_input = [self.keys_collected, self.extinguishers_collected, 0]
+        self.action_space = ['up', 'down', 'left', 'right']
+        self.ai_controlled = airis_controlled
         self.time_counter = 0
+        self.airis = AIRIS(self.aux_input, self.screen_input, self.action_space)
+        self.airis.load_knowledge('Knowledge.npy')
+        if not airis_controlled:
+            self.airis.observe_mode = True
+        self.airis.given_goal_state = [[[2, '+']], []]
 
     # this function updates the model
     def update(self):
 
-        pprint('-------------------------------------------- TIME STEP %d --------------------------------------------'
-            % self.time_counter, new_line_start=True, draw_line=False)
         self.time_counter += 1
 
         self.set_change_in_game_map(False)
+
+        player_action = 'nothing'
+
+        level_change = False
+        player_death = False
+
         # get user input
-        if not self.airis.display_hold or self.controller.bypass:
-            self.player_action = 'up'
+        if not self.ai_controlled:
+            player_action = self.get_action()
 
-            if not self.airis_controlled:
-                self.player_action = self.get_action()
+        # set environment values to current and output to ai
+        self.current_environment()
 
-            # input environment to airis
-            self.current_environment()
-            if self.airis_controlled:
-                self.player_action, _, _ = self.airis.capture_input(
-                    self.screen_input,
-                    self.aux_input,
-                    self.player_action, prior=True)
+        if not self.plan_made:
+            if self.ai_controlled:
+                self.player_action, self.state = self.airis.capture_input(self.aux_input, self.screen_input, None, None, True)
             else:
-                self.airis.capture_input(
-                    self.screen_input,
-                    self.aux_input,
-                    self.player_action, prior=True)
-            pprint('ACTION:\t%s' % self.player_action, new_line_start=True, draw_line=False)
-            if self.airis.display_hold and not self.controller.bypass:
-                self.controller.paused = True
-                self.controller.mind_index = 0
-                print ('Awaiting plan approval...')
+                act, state = self.airis.capture_input(self.aux_input, self.screen_input, player_action, None, True)
 
-        if not self.controller.paused or self.controller.bypass:
-            self.airis.display_hold = False
-            # update the model according to the player's input
-            self.game_logic(self.player_action)
+            self.plan_made = True
+            if self.controller.approval_mode:
+                self.controller.paused = True
+
+        else:
+            if self.player_action:
+                player_action = self.player_action
+                state = self.state
+                self.player_action = None
+                self.state = None
+            else:
+                if self.ai_controlled:
+                    player_action, state = self.airis.capture_input(self.aux_input, self.screen_input, None, None, True)
+                else:
+                    act, state = self.airis.capture_input(self.aux_input, self.screen_input, player_action, None, True)
+
+            # update the game according to the player's input
+            self.game_logic(player_action)
+
+            # output post-action environment to ai
+            self.current_environment()
 
             # go to next level if player beats the current level
             if self.batteries_collected == self.num_batteries:
+                level_change = True
+                self.airis.capture_input(self.aux_input, self.screen_input, player_action, state, False)
                 self.get_next_maze()
 
             # reset the maze if the character dies
             if self.maze_reset:
+                player_death = True
+                self.aux_input[2] -= 1
+                self.airis.capture_input(self.aux_input, self.screen_input, player_action, state, False)
                 self.get_next_maze()
 
-            # input environment to airis
-            self.current_environment()
-            self.airis.capture_input(
-                self.screen_input,
-                self.aux_input,
-                self.player_action, prior=False)
+            if not level_change and not player_death:
+                self.airis.capture_input(self.aux_input, self.screen_input, player_action, state, False)
+            else:
+                self.airis.action_plan = []
+                self.airis.pos_change_2D = []
 
-        # user_input = input()
-        # sys.exit()
+            self.airis.save_knowledge('Knowledge.npy')
 
-    # these functions interact with AIRIS
+            if self.airis.action_plan:
+                self.plan_made = True
+            else:
+                self.plan_made = False
+
+            if not controller.approval_mode:
+                self.plan_made = True
+
     def get_action(self):
         return self.controller.player_input
 
@@ -305,6 +262,8 @@ class Model(object):
             elif isinstance(new_tile, Fire):
                 if self.extinguishers_collected == 0:
                     self.reset_maze()
+                    self.move_character(new_tile, character_new_pos, self.character)
+                    self.character_current_floor = self.floor
                 else:
                     self.move_character(new_tile, character_new_pos, self.character)
                     self.character_current_floor = self.floor
@@ -361,6 +320,7 @@ class Model(object):
     def collect_battery(self, character_new_pos):
 
         self.batteries_collected += 1
+        self.aux_input[2] += 1
         self.character_current_floor = self.floor
     def collect_extinguisher(self, character_new_pos):
 
@@ -532,10 +492,9 @@ class PyGameKeyboardController(object):
 
         self.paused = False
         self.player_input = 'nothing'
-        self.mind_index = 0
-        self.mind_action = ''
-        self.mind_len = 0
-        self.bypass = True
+        self.time_slow = True
+        self.exit = False
+        self.approval_mode = False
 
     def handle_input(self):
 
@@ -548,8 +507,7 @@ class PyGameKeyboardController(object):
                 if event.type != KEYDOWN:
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         mouse_pos = pygame.mouse.get_pos()
-                        print ('mouse interrupt')
-                        interrupt = input()
+
                         #print('mouse position = (%d,%d)') % (mouse_pos[0], mouse_pos[1])
 
                         if event.button == 4:
@@ -564,11 +522,16 @@ class PyGameKeyboardController(object):
                             print('event.button = %d' % event.button)
                 elif event.key == pygame.K_SPACE:
                     self.paused = not self.paused
-                    print('Plan approved!')
                 elif event.key == pygame.K_k:
                     view.show_controls = not view.show_controls
                 elif event.key == pygame.K_v:
                     view.show_view = not view.show_view
+                elif event.key == pygame.K_t:
+                    self.time_slow = not self.time_slow
+                elif event.key == pygame.K_x:
+                    self.exit = True
+                elif event.key == pygame.K_a:
+                    self.approval_mode = not self.approval_mode
 
         keys = pygame.key.get_pressed()  # checking pressed keys
         original_player_input = self.player_input
@@ -577,31 +540,21 @@ class PyGameKeyboardController(object):
             is_there_input = True
             self.player_input = 'up'
             number_of_keys_pressed += 1
-            if airis_controlled:
-                self.bypass = False
             # print('up')
         if keys[pygame.K_DOWN]:
             is_there_input = True
             self.player_input = 'down'
             number_of_keys_pressed += 1
-            if airis_controlled:
-                self.bypass = True
             # print('down')
         if keys[pygame.K_LEFT]:
             is_there_input = True
             self.player_input = 'left'
             number_of_keys_pressed += 1
-            if airis_controlled:
-                if self.mind_index > 0:
-                    self.mind_index -= 1
             # print('left')
         if keys[pygame.K_RIGHT]:
             is_there_input = True
             self.player_input = 'right'
             number_of_keys_pressed += 1
-            if airis_controlled:
-                if self.mind_index < self.mind_len-1:
-                    self.mind_index += 1
             # print('right')
         if number_of_keys_pressed > 1:
             # print('>1')
@@ -616,12 +569,20 @@ if __name__ == '__main__':
 
     # pygame setup
     airis_controlled = True
+    approval_mode = False
     pygame.init()
     pygame.display.set_caption('Airis '+str(id(pygame)))
     controller = PyGameKeyboardController()
+    controller.approval_mode = approval_mode
+    if airis_controlled:
+        controller.time_slow = False
     model = Model(controller, airis_controlled)
     if GAME_SHOW_SCREEN:
         view = PyGameView(model)
+
+    logcount = len(os.listdir('./logs')) * 10
+    view.log = logcount
+    sys.stdout = open('./logs/Console_Log' + str(logcount) + '.txt', 'w')
 
     # loop variable setup
     running = True
@@ -634,11 +595,16 @@ if __name__ == '__main__':
         view.screen.blit(view.surface, (0,0))
         pygame.display.update()
 
-    # if airis_controlled:
-    #     print ('Press any key to begin')
-    #     interrupt = input()
+    pygame.image.save(view.surface, 'screens/' + str(view.counter) + '_' + str(view.log) + '.jpg')
 
     while running:
+
+        if os.path.getsize('./logs/Console_Log'+str(logcount)+'.txt') > 500000000:
+            logcount += 1
+            # if logcount == 101:
+            #     raise Exception
+            view.log = logcount
+            sys.stdout = open('./logs/Console_Log' + str(logcount) + '.txt', 'w')
 
         # # output frame rate
         # iterations += 1
@@ -651,7 +617,7 @@ if __name__ == '__main__':
         running, there_is_input = controller.handle_input()
 
         # if theres user input
-        if model.airis_controlled or there_is_input or first_update:
+        if model.ai_controlled or there_is_input or first_update:
             there_is_input, first_update = False, False
             # update the model
             if not controller.paused:
@@ -662,6 +628,10 @@ if __name__ == '__main__':
                 view.draw()
                 view.screen.blit(view.surface, (0,0))
                 pygame.display.update()
+
+            if not controller.paused:
+                pygame.image.save(view.surface, 'screens/' + str(view.counter) + '_' + str(view.log) + '.jpg')
+
 
             # reset user input
             controller.player_input = 'nothing'
@@ -683,9 +653,14 @@ if __name__ == '__main__':
                     # load the next level or reload the current level
                     # on win or death without having to click anything
 
-
-        time.sleep(0.10) # control frame rate (in seconds)
-
+        if controller.time_slow:
+            time.sleep(.1) # control frame rate (in seconds)
+        if controller.exit:
+            model.airis.error_stop = True
+        if controller.approval_mode:
+            pygame.display.set_caption('Ai ' + str(id(pygame)) + '- Plan Review Mode')
+        else:
+            pygame.display.set_caption('Ai ' + str(id(pygame)))
 
     pygame.quit()
     sys.exit()

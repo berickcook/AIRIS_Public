@@ -1,44 +1,99 @@
-# AIRIS - Public Release
+# AIRIS - Public Builds
 
-AIRIS is an Artificial General Intelligence (AGI) project that combines aspects of Reinforcement Learning (RL) with more traditional symbolic techniques (GOFAI).
+AIRIS is a General Machine Intelligence (GMI) project that combines aspects of Reinforcement Learning (RL) with more traditional symbolic techniques (GOFAI).
 
 [See http://airis-ai.com for videos and additional information.](http://airis-ai.com)
+
+### This repository is for stable builds both old and new (Last updated 12/30/2023)
 
 Requires Python 3.x
 
 See "requirements.txt" for additional required packages
-
-By default, the AI is configured to run parallelized on your CPU. You can reconfigure it to run on a CUDA compatible GPU by changing line 123 of other_useful_functions.py to the following:
-
-`@vectorize(['float32(float32, float32)'], target="cuda")`
 
 Regardless of the test environment, AIRIS's learned knowledge is exported as one large python dictionary called "Knowledge.npy" whenever the `save_knowledge()` function is called. If this file exists, it is loaded on the startup of any environment. If this file is deleted or moved from the working directory, AIRIS will "start from scratch" and generate a new one.
 
 ###### The Cognitive Architecture of AIRIS 
 ![AIRIS Cognitive Architecture](https://airisai.files.wordpress.com/2019/01/airis-cognitive-architecture-3.png)
 
-# Example Tests
+# File Descriptions
 
-## puzzle_game_driver.py 
-A grid-world puzzle game with various obstacles. The goal is to collect all batteries in a level. There are 13 levels with varying degrees of difficulty and obstacle variety.
-
-By default, this environnment is frame-limited to make it easier for the user to see what is happening. To remove this limitiation and allow the AI to operate at the maximum speed for your hardware, simply comment out line 1289.
-
-`1289: time.sleep(0.10) # control frame rate (in seconds)`
+**puzzle_game_driver.py** is a grid world puzzle game. Run it to watch AIRIS play the game.
 
 ![Puzzle Game Level](https://airisai.files.wordpress.com/2019/01/puzzle-game-level.png)
 
 [Gif of AIRIS Completing the puzzle](https://airisai.files.wordpress.com/2018/03/level.gif)
 
-###### puzzle_game_driver.py additional controls
+**puzzle_game_driver_custom.py** This is the grid-world puzzle game, but loads the custom levels stored in \custom_levels instead of the original 13.
 
-To enable "view plan" mode, hold the Up Arrow on your keyboard until the console says "Awaiting plan approval..."
+**airis_stable.py** is the AI code itself.
 
-You can then use the Left and Right arrow keys to step through each action the AI is planning to perform, and what it expects the result to be.
+**Knowledge.npy** is the file the AI generates during runtime that has the knowledge it creates. 
 
-Press the Space Bar on your keyboard to "approve" the plan and allow the AI to continue.
+**Knowledge_View.py** Generates a text file of all the data contained in Knowledge.npy as knowledge_view.txt
 
-To disable "view plan" mode, hold the Down Arrow
+**rule_viewer.py** outputs the knowledge into a more human readable format as rules_view.txt
+
+**minds_eye.py** is the "Minds Eye" tool I used in the 2023 demo video. Good for seeing what the AI is planning to do and watching how it learns. It's a hacky tool put together by modifying the puzzle game code. It will only work with the puzzle game. Need to make one that works with any environment...
+
+**Knowledge - Trained Copy.npy** is a copy of its knowledge after running through all levels 3 times. Rename it to Knowledge.npy and it will load it instead learning from scratch.
+
+**images** folder stores the game graphics
+
+**logs** folder stores debug output logs when self.debug (line 36 of airis_stable.py) is set to True. These can get quite large!
+
+**plan_log** and **predict_log** folders are the where the AI outputs its plans and states that are read by minds_eye.py
+
+**screens** folder is screenshots of each timestep.
+
+**constants.py** settings used by puzzle_game_driver_universal.py
+
+**game_objects.py** object data used by puzzle_game_driver_universal.py
+
+**state.py** Used by the AI to store state information
+
+**minds_eye_constants.py** settings used by minds_eye.py
+
+**minds_eye_objects.py** object data used by minds_eye.py
+
+# puzzle_game_driver usage
+
+### Options:
+
+**AI Controlled** - change line 1245 to true or false to toggle whether the AI is controlling the game or if it is observing a human player.
+
+**Plan Review Mode** - change line 1246 to true or false to toggle whether the AI waits between plans for the user to allow it to continue. Can also be toggled during runtime.
+
+### Controls:
+
+**Arrow Keys (Not AI Controlled)** - Move the character
+
+**Space Bar (Plan Review Mode)** - Allow the AI to continue
+
+**Space Bar (Not Plan Review Mode)** - Pause the game
+
+**T** - Toggle game speed
+
+**X** - Safely exit the game. This ensures that the game doesn't close in the middle of the AI writing to Knowledge.npy which would corrupt it.
+
+**A** - Toggle "Plan Review Mode"
+
+# minds_eye usage
+
+### Setup:
+
+Before using, clear the plan_log and predict_log folders. If you don't clear out the folders then minds_eye will be showing what a previous AI was thinking.
+
+Run puzzle_game_driver_universal.py, then run minds_eye.py
+
+### Controls:
+
+M - Switch views between "Current Plan" and "Predicted States".
+
+### View Modes:
+
+"Current Plan" shows the AI's most recent plan.
+"Predicted States" shows each state in the action/state graph used to create the current plan.
+
 
 ## puzzle_game_editor.py
 This is the level editor for the puzzle game environment. You can use this editor to create your own custom levels for AIRIS to solve. Run puzzle_game_driver_custom.py to use the custom levels.
@@ -63,8 +118,6 @@ You can load a level for editing by adding the level number as a command line ar
 
 You can only save whatever level was created or loaded on startup. To create or load another level, you must exit and restart the editor.
 
-## puzzle_game_driver_custom.py
-This is the grid-world puzzle game, but loads the custom levels stored in \custom_levels instead of the original 13.
 
 ## puzzle_game_driver_universal.py
 This is the grid-world puzzle game with the original 13 levels, but with all AIRIS dependencies stripped out. This environment is for use with any other AI algorithm. 
@@ -100,7 +153,7 @@ It expects one of 5 actions to be returned: 'up', 'down', 'left', 'right', or 'n
 By default, it is set to be human controlled with the arrow keys. This can be changed by setting ai_controlled to TRUE on line 1136. Just make sure your AI can get, handle, and return the necessary values (See line 129 and line 157).
 
 ## mnist_driver2.py
-Number recognition using the MNIST hand-written character dataset
+Number recognition using the MNIST hand-written character dataset.
 
 ![MNIST Character](https://airisai.files.wordpress.com/2018/03/sprite0_4.png)
 

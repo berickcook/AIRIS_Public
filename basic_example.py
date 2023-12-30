@@ -1,4 +1,4 @@
-from airis_stable import AIRIS
+from airis_old import AIRIS
 
 # Environment Setup
 # For now, the environment has to be a 2D array, but were only going to use 1 of the D's for this example

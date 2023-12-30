@@ -4,7 +4,7 @@ import array
 import numpy as np
 from pygame.locals import QUIT, KEYDOWN
 from constants import *
-from airis_stable import AIRIS
+from airis_old import AIRIS
 import struct
 import matplotlib.pyplot as plt
 
