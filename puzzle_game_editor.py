@@ -4,6 +4,7 @@ from pygame.locals import QUIT, KEYDOWN
 from editor_objects import *
 from editor_constants import *
 
+
 class PyGameView(object):
     '''
         PyGameView controls the display

@@ -1240,7 +1240,7 @@ class PyGameKeyboardController(object):
 if __name__ == '__main__':
 
     # pygame setup
-    ai_controlled = True
+    ai_controlled = False  # True
     approval_mode = False
     pygame.init()
     pygame.display.set_caption('Ai '+str(id(pygame)))

@@ -287,6 +287,7 @@ class Model(object):
             elif isinstance(new_tile, Key):
                 self.move_character(new_tile, character_new_pos, self.character)
                 self.collect_key(character_new_pos)
+
     def move_character(self, new_tile, character_new_pos, character_and_floor):
 
         character_old_floor = self.character_current_floor
@@ -317,6 +318,7 @@ class Model(object):
         [character_old_pos[0]] \
         [character_old_pos[1]] \
         = True
+
     def collect_battery(self, character_new_pos):
 
         self.batteries_collected += 1

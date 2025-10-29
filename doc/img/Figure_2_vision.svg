@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Généré par Microsoft Visio, SVG Export Figure_1_vision.svg Page-1 -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events"
+		xmlns:v="http://schemas.microsoft.com/visio/2003/SVGExtensions/" width="4.81043in" height="3.70042in"
+		viewBox="0 0 346.351 266.431" xml:space="preserve" color-interpolation-filters="sRGB" class="st8">
+	<v:documentProperties v:langID="1036" v:metric="true" v:viewMarkup="false">
+		<v:userDefs>
+			<v:ud v:nameU="msvNoAutoConnect" v:val="VT0(1):26"/>
+		</v:userDefs>
+	</v:documentProperties>
+
+	<style type="text/css">
+	<![CDATA[
+		.st1 {fill:none;stroke:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.75}
+		.st2 {fill:url(#ptrn2-8);shape-rendering:crispEdges;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.75}
+		.st3 {fill:url(#ptrn5-12);shape-rendering:crispEdges;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.75}
+		.st4 {stroke:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.75}
+		.st5 {fill:#000000;font-family:Arial;font-size:0.829971em}
+		.st6 {fill:#000000;font-family:Arial;font-size:0.749977em}
+		.st7 {stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.75}
+		.st8 {fill:none;fill-rule:evenodd;font-size:12px;overflow:visible;stroke-linecap:square;stroke-miterlimit:3}
+	]]>
+	</style>
+
+	<defs id="Patterns_And_Gradients">
+		<pattern id="ptrn2-8" v:fillPattern="2" v:foreground="#c05046" v:foregroundOpacity="0.24" v:background="#ffffff"
+				v:backgroundOpacity="0.24" patternUnits="userSpaceOnUse" width="6" height="6" viewBox="0 0 64 64">
+			<image x="0" y="0" width="64" height="64" image-rendering="optimizeSpeed"
+					xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAGdYAABnWARjRyu0AAAA8SURBVChTY3h38aLtv3//MDBI/Eh0sC0DPkkQjaEAWRLER1GALomiAJskXAEuSbACfJJgBfgk3128aAsApnC64aRzEJAAAAAASUVORK5CYII="/>
+		</pattern>
+		<pattern id="ptrn5-12" v:fillPattern="5" v:foreground="#c05046" v:foregroundOpacity="0.24" v:background="#ffffff"
+				v:backgroundOpacity="0.24" patternUnits="userSpaceOnUse" width="6" height="6" viewBox="0 0 64 64">
+			<image x="0" y="0" width="64" height="64" image-rendering="optimizeSpeed"
+					xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAGdYAABnWARjRyu0AAAA/SURBVChTYzgSHWz77uJF23///mFgkDgDiMCniAFE4FMEVgDCuBTBFYAwNkUoCkAYXRGGAhBGVgT2BW5FwbYApnC64bcWHWAAAAAASUVORK5CYII="/>
+		</pattern>
+	</defs>
+	<g v:mID="0" v:index="1" v:groupContext="foregroundPage">
+		<title>Page 1</title>
+		<v:pageProperties v:drawingScale="0.0393701" v:pageScale="0.0393701" v:drawingUnits="24" v:shadowOffsetX="8.50394"
+				v:shadowOffsetY="-8.50394"/>
+		<g id="shape15-1" v:mID="15" v:groupContext="shape" transform="translate(0.375,-0.375)">
+			<title>Feuille.15</title>
+			<rect v:rectContext="foreign" x="0" y="0.750006" width="345.601" height="265.681" class="st1"/>
+			<image x="0" y="0.750006" width="345.601" height="265.681" preserveAspectRatio="none" xlink:href="data:image/png;base64,
+						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
+						zJnaX7/vCKE8C/ufYwUDt5N60yTAnJm9vb3lXffnWJ6V/c/b/9x0DzBb6k2TAHOmLl/dW567fH72Py/dAZB60yTAAIyQetMkwACMkHrT
+						JMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMk
+						wACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTA
+						AIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAA
+						jJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACM
+						kHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQ
+						etMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB6
+						0yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetN0IQMMAGsnwABQIMAAUCDAAFAgwABQIMAAUCDA
+						AFAgwABQIMAAUCDAAFAgwABQIMAAUCDAAFAgwABQIMAAUCDAAFAgwABQIMAAUCDAAFAgwABQIMAAUCDAAFAgwABQIMAAUCDAAFAgwABQ
+						IMAAUCDAAFAgwABQIMAAUCDAAFAgwABQIMAAUCDAAFAgwABQIMAAUCDAAHDu7l3+AyxjIdOy0PrPAAAAAElFTkSuQmCC"/>
+			<rect v:rectContext="foreign" x="0" y="0.750006" width="345.601" height="265.681" class="st1"/>
+		</g>
+		<g id="shape17-5" v:mID="17" v:groupContext="shape" transform="translate(26.9291,-80.0553)">
+			<title>Feuille.17</title>
+			<rect x="0" y="105.541" width="106.866" height="160.89" class="st2"/>
+		</g>
+		<g id="shape19-9" v:mID="19" v:groupContext="shape" transform="translate(106.016,-80.0553)">
+			<title>Feuille.19</title>
+			<rect x="0" y="105.541" width="214.458" height="160.89" class="st3"/>
+		</g>
+		<g id="shape11-13" v:mID="11" v:groupContext="shape" transform="translate(48.189,-215.125)">
+			<title>Feuille.11</title>
+			<desc>Left</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)" v:tabSpace="42.5197"/>
+			<v:textRect cx="19.8425" cy="260.453" width="39.69" height="11.9552"/>
+			<path d="M39.69 254.48 L0 254.48 L0 266.43 L39.69 266.43 L39.69 254.48" class="st4"/>
+			<text x="11.54" y="263.44" class="st5" v:langID="1036"><v:paragraph v:horizAlign="1"/><v:tabList/>Left</text>		</g>
+		<g id="shape13-17" v:mID="13" v:groupContext="shape" transform="translate(204.094,-215.125)">
+			<title>Feuille.13</title>
+			<desc>Right</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)" v:tabSpace="42.5197"/>
+			<v:textRect cx="19.8425" cy="260.453" width="39.69" height="11.9552"/>
+			<path d="M39.69 254.48 L0 254.48 L0 266.43 L39.69 266.43 L39.69 254.48" class="st4"/>
+			<text x="8.22" y="263.44" class="st5" v:langID="1036"><v:paragraph v:horizAlign="1"/><v:tabList/>Right</text>		</g>
+		<g id="shape14-21" v:mID="14" v:groupContext="shape" transform="translate(157.392,-167.766)">
+			<title>Feuille.14</title>
+			<desc>Target</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)" v:tabSpace="42.5197"/>
+			<v:textRect cx="16.3957" cy="261.029" width="32.8" height="10.8033"/>
+			<path d="M32.79 255.63 L0 255.63 L0 266.43 L32.79 266.43 L32.79 255.63" class="st4"/>
+			<text x="3.39" y="263.73" class="st6" v:langID="1036"><v:paragraph v:horizAlign="1"/><v:tabList/>Target</text>		</g>
+		<g id="shape20-25" v:mID="20" v:groupContext="shape" transform="translate(106.724,-79.5399)">
+			<title>Feuille.20</title>
+			<rect v:rectContext="foreign" x="0" y="240.315" width="26.5039" height="26.1151" class="st1"/>
+			<clipPath id="clip-path27" clipPathUnits="userSpaceOnUse">
+				<rect x="0" y="240.315" width="26.5039" height="26.1151"/>
+			</clipPath>
+			<image x="-106.37" y="81.0284" width="345.601" height="265.681" preserveAspectRatio="none"
+					clip-path="url(#clip-path27)" overflow="hidden" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAe
+						AAAAFxCAYAAACr7ntzAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAD18AAA9fAdeK2skAAAymSURBVHhe7dxPi5
+						0HGcZhv4a6FPwy+hEEF9ptQdAKVoS6siJWRStV7MKFVG1BRbAWpQ2FqojBRCdWtP6pVNCFbSXRpi28dkaOOJM7yZwzf+7hfa7AxTDvOX
+						Ce3Y+bmczb3vfFexcA4HwJMAAUCDAAFAgwABQIMAAUCDAAFAgwABQIMAAUCDAAFAgwABQIMAAUCDAAFAgwABQIMADcxgOPf3Z5/qUXlt
+						dev7m8fOPV5YdXnlk+8MiH43u3JcAAEHzssQeXm2/cXP749xeXR5/+5vKdnz/51vevL7/80158/7YEGACC/dD+4/orywcf+cj/nn31x9
+						9Y9v996rtfOvTeXQgwAByxH9033nxz+f4vfnTo+fsf/tDyr5v/Xp7ee+7Q810IMAAc8cDjDx0s3S88+egtrz3/0u+XP/ztxVueb0uAAe
+						CIz//gawcB/uQTn7vltZ/+7vLy8vVXbnm+LQEGgCO+/NTXDwL8iW995pbXnv3Nz5brr9245fm2BBgAjrCAAaDAz4ABoOCer9x3x9+Cfm
+						bvJ4ee70KAASC40/8DfvB7Dx967y4EGACC+x/79MFfvjr8l7BuLlf+fC2+f1sCDAC3sf9LWL/96wsH4X31xj+Xp65cOrSIT0KAAaBAgA
+						GgQIABoECAAaBAgAGgQIABoECAAaBAgAGgQIABoECAAaDgQgb42rVrAHCqUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgB
+						FSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEV
+						JvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm
+						+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5
+						oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmg
+						QYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBB
+						iAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGIARUm+aBBiAEVJvmgQYgBFSb5oEGI
+						ARUm+aBBiAEVJvmgQYCv5yz6ULJ90Ja5J60yTAUJAC2JbuhDVJvWkSYChIAWxLd8KapN40CTAUpAC2pTthTVJvmgQYClIA29KdsCapN0
+						0CDAUpgG3pTliT1JsmAYaCFMC2dCesSepNkwBDQQpgW7oT1iT1pkmAoSAFsC3dCWuSetMkwFCQAtiW7oQ1Sb1pEmAoSAFsS3fCmqTeNA
+						kwFKQAtqU7YU1Sb5oEGApSANvSnbAmqTdNAgwFKYBt6U5Yk9SbJgGGghTAtnQnrEnqTZMAQ0EKYFu6E9Yk9aZJgKEgBbAt3QlrknrTJM
+						BQkALYlu6ENUm9aRJgKEgBbEt3wpqk3jQJMBSkALalO2FNUm+aBBgKUgDb0p2wJqk3TQIMBSmAbelOWJPUmyYBhoIUwLZ0J6xJ6k2TAE
+						NBCmBbuhPWJPWmSYChIAWwLd0Ja5J60yTAUJAC2JbuhDVJvWkSYChIAWxLd8KapN40CTAUpAC2pTthTVJvmgQYClIA29KdsCapN00CDA
+						UpgG3pTliT1JsmAYaCFMC2dCesSepNkwBDQQpgW7oT1iT1pkmAoSAFsC3dCWuSetMkwFCQAtiW7oQ1Sb1pEmAoSAFsS3fCmqTeNAkwFK
+						QAtqU7YU1Sb5oEGApSANvSnbAmqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN0
+						0CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQ
+						IMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAg
+						zACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDM
+						AIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwA
+						ipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACK
+						k3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqTdNAgzACKk3TQIMwAipN00CDMAIqT
+						dNAgzACKk3TQIMwAipN00CDMAIqTdNAsyF9Ktf78XnALtKvWkSYC6cJy7tLe/++NWDr+l1gF2k3jQJMBfOex66urz9vqvLe9/6ml4H2E
+						XqTZMAc6F8+5m9g/hu7H+f3gewrdSbJgHmQtlfv+/86H/ju//VCgZOS+pNkwBzYRxdvxtWMHAaUm+aBJgL4//X74YVDJyW1JsmAeZCuN
+						363bCCgZNKvWkSYC6EtH43rGDgNKTeNAkwdXdbvxtWMHASqTdNAkzdndbvhhUMnFTqTZMAU3Xc9bthBQO7Sr1pEmCqjrN+N6xg4CRSb5
+						oEmJpt1++GFQzsIvWmSYCp2Wb9bljBwK5Sb5oEmIpd1++GFQxsK/WmSYCp2GX9bljBwC5Sb5oEmHN30vW7YQUD20i9aRJgzt1J1u+GFQ
+						xsK/WmSYA5V6e1fjesYOC4Um+aBJhzdRrrd8MKBraRetMkwJyb016/G1YwcBypN00CzLk5zfW7YQUDx5V60yTAnIuzWr8bVjBwN6k3TQ
+						LMuTiL9bthBQPHkXrTJMCcubNevxtWMHAnqTdNAsyZO8v1u2EFA3eTetMkwJyp81q/G1YwcDupN00CzJnaX7/vCKE8C/ufYwUDt5N60y
+						TAnJm9vb3lXffnWJ6V/c/b/9x0DzBb6k2TAHOmLl/dW567fH72Py/dAZB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkH
+						rTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQet
+						MkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60y
+						TAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJM
+						AAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwA
+						CMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAI
+						yQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetMkwACMkHrTJMAAjJ
+						B60yTAAIyQetMkwACMkHrTJMAAjJB60yTAAIyQetN0IQMMAGsnwABQIMAAUCDAAFAgwABQIMAAUCDAAFAgwABQIMAAUCDAAFAgwABQIM
+						AAUCDAAFAgwABQIMAAUCDAAFAgwABQIMAAUCDAAFAgwABQIMAAUCDAAFAgwABQIMAAUCDAAFAgwABQIMAAUCDAAFAgwABQIMAAUCDAAF
+						AgwABQIMAAUCDAAFAgwABQIMAAUCDAAHDu7l3+AyxjIdOy0PrPAAAAAElFTkSuQmCC"/>
+			<rect v:rectContext="foreign" x="0" y="240.315" width="26.5039" height="26.1151" class="st1"/>
+		</g>
+		<g id="shape25-29" v:mID="25" v:groupContext="shape" transform="translate(106.273,-105.655)">
+			<title>Feuille.25</title>
+			<path d="M0 266.43 L27.32 266.43" class="st7"/>
+		</g>
+		<g id="shape26-32" v:mID="26" v:groupContext="shape" transform="translate(100.63,-215.125)">
+			<title>Feuille.26</title>
+			<desc>Front</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)" v:tabSpace="42.5197"/>
+			<v:textRect cx="19.8425" cy="260.453" width="39.69" height="11.9552"/>
+			<path d="M39.69 254.48 L0 254.48 L0 266.43 L39.69 266.43 L39.69 254.48" class="st4"/>
+			<text x="8.22" y="263.44" class="st5" v:langID="1036"><v:paragraph v:horizAlign="1"/><v:tabList/>Front</text>		</g>
+	</g>
+</svg>

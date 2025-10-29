@@ -152,6 +152,12 @@ It expects one of 5 actions to be returned: 'up', 'down', 'left', 'right', or 'n
 
 By default, it is set to be human controlled with the arrow keys. This can be changed by setting ai_controlled to TRUE on line 1136. Just make sure your AI can get, handle, and return the necessary values (See line 129 and line 157).
 
+## puzzle_game_interactional_motivation.py
+
+This is an example of using AIRIS in an interactional motivation scenario.
+(under development).
+See [documentation](docs/interactional_motivation.md).
+
 ## mnist_driver2.py
 Number recognition using the MNIST hand-written character dataset.
 

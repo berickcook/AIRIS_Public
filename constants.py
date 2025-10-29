@@ -3,11 +3,13 @@
 
 GAME_SHOW_SCREEN = True
 GAME_SCREEN_SIZE = (1000, 400)
+# GAME_SCREEN_SIZE = (965, 370)  # Interactional Motivation
 
-#MAP_SIZE = (640, 480) # original
-GAME_MAP_SIZE = (480, 360) # GAME_MAP_SIZE is the number of pixels the entire game map is wide and tall
-GAME_MAP_GRID = (20, 15) # GAME_MAP_GRID is the number of of tiles the game is wide and tall
-GAME_MAP_START = (5, 5) # GAME_MAP_START is the coordinates on the screen where the top left of the game map is displayed
+# MAP_SIZE = (640, 480) # original
+GAME_MAP_SIZE = (480, 360)  # GAME_MAP_SIZE is the number of pixels the entire game map is wide and tall
+GAME_MAP_GRID = (20, 15)  # GAME_MAP_GRID is the number of of tiles the game is wide and tall
+# GAME_MAP_GRID = (13, 10)  # Interactional Motivation
+GAME_MAP_START = (5, 5)  # The coordinates on the screen where the top left of the game map is displayed
 GAME_POS_SIZE = (int(GAME_MAP_SIZE[0] / GAME_MAP_GRID[0]), int(GAME_MAP_SIZE[1] / GAME_MAP_GRID[1])) # pixel dim. of position
 
 # these variables represent the same stuff as their GAME map conterparts
@@ -24,7 +26,6 @@ PUZZLE_GAME_CONTROL_KEY = [
     "    k = Toggle KeyBoard Control Key",
 ]
 PUZZLE_GAME_CONTROL_KEY_START = (100, 100)
-
 
 
 ############ MNIST ########################
@@ -58,3 +59,10 @@ DEBUG_WITH_LOGFILE = False  # output AIRIS's thoughts to a file
 DEBUG_LOGFILE_PATH = './debug_log.txt'
 DEFAULT_INDENT = '|  '
 DEFAULT_DRAW_LINE = False
+
+FLOOR = 0
+CHARACTER = 1
+WALL = 2
+BATTERY = 3
+DOOR = 4
+
