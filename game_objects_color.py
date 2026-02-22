@@ -24,6 +24,9 @@ class GameObjectColor(object):
                                      REP_MAP_START[1] + y * REP_POS_SIZE[1]))
         pygame.display.flip()
 
+    def set_smell(self, smell=0.5):
+        pass
+
 
 class BumpSprite(GameObjectColor):
     def __init__(self):

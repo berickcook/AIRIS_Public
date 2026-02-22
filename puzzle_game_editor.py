@@ -673,7 +673,7 @@ if __name__ == '__main__':
 
     # display the view initially
     view.draw()
-    view.screen.blit(view.surface, (0,0))
+    view.screen.blit(view.surface, (0, 0))
     pygame.display.update()
 
     while running:

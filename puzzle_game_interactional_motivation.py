@@ -2,32 +2,17 @@ import pygame
 import time, sys, csv
 from pygame.locals import QUIT, KEYDOWN
 from game_objects import *
-from constants import GAME_MAP_GRID, GAME_MAP_START, GAME_SHOW_SCREEN, GAME_SCREEN_SIZE, REP_MAP_GRID, BATTERY
+from constants import GAME_MAP_GRID, GAME_MAP_START, GAME_SHOW_SCREEN, GAME_SCREEN_SIZE, REP_MAP_GRID, BATTERY, WALL, \
+    PUZZLE_GAME_CONTROL_KEY, PUZZLE_GAME_CONTROL_KEY_START, MAX_SMELL, FORWARD, SNIFF_LEFT, SNIFF_FRONT, SNIFF_RIGHT, \
+    DECREASE, INCREASE, STABLE, BUMP, EAT, TURN_LEFT, TURN_RIGHT, ACTIONS_IMOSM_AIRIS
 from other_useful_functions import pprint
 import datetime
 import numpy as np
 from game_objects_color import BumpSprite, FeelEmptySprite, FeelWallSprite
-
-
-# Actions
-FORWARD = 0
-TURN_LEFT = 2
-TURN_RIGHT = 1
-# Outcomes
-STABLE = 0
-FEEL_WALL = 1
-BUMP = 1
-INCREASE_LEFT = 2
-INCREASE_RIGHT = 3
-INCREASE_FRONT = 4
-DECREASE = 5
-EAT = 6
-SMELL_FEEDBACK = np.array([
-    [STABLE, INCREASE_RIGHT, INCREASE_LEFT, INCREASE_FRONT],
-    [DECREASE, INCREASE_RIGHT, STABLE, INCREASE_FRONT],
-    [DECREASE, STABLE, INCREASE_LEFT, INCREASE_FRONT],
-    [DECREASE, DECREASE, DECREASE, INCREASE_FRONT]
-])
+import networkx as nx
+import structlog
+from imosm import Interaction, Agent
+import tracer
 
 # Directions
 UP = 0
@@ -48,8 +33,10 @@ class PyGameView(object):
         self.screen = pygame.display.set_mode(GAME_SCREEN_SIZE)  # a pygame screen
         self.surface = pygame.Surface(GAME_SCREEN_SIZE)  # a pygame surface is the thing you draw on
 
-        self.show_view = True # toggle display
-        self.show_controls = False # toggle control display
+        self.show_view = True  # toggle display
+        self.show_controls = False  # toggle control display
+
+        self.counter_font = pygame.font.SysFont("courier", 20, bold=True)
 
     def draw(self):
 
@@ -66,6 +53,13 @@ class PyGameView(object):
             for n, line in enumerate(PUZZLE_GAME_CONTROL_KEY):
                 self.draw_text(line, PUZZLE_GAME_CONTROL_KEY_START[0],
                                PUZZLE_GAME_CONTROL_KEY_START[1]+14*n, 20)
+
+        # Draw counter
+        counter_surface = self.counter_font.render(f'{model.time_counter:04}', True, (255, 255, 255))
+        counter_rectangle = counter_surface.get_rect(topleft=(920, 6))
+        self.surface.fill((64, 64, 64), counter_rectangle)
+        self.surface.blit(counter_surface, counter_rectangle)
+
         # update display
         pygame.display.update()
 
@@ -91,14 +85,16 @@ class PyGameView(object):
         ms = REP_MAP_START
 
         # Redraw the changed representations
-        for key, spright in self.model.changes_in_rep.items():
-            spright.draw_representation_image(self, key[0], key[1])
+        for key, sprite in self.model.changes_in_rep.items():
+            sprite.draw_representation_image(self, key[0], key[1])
             # Prepare for next update
-            if isinstance(spright, BumpSprite) or isinstance(spright, FeelWallSprite):
+            if isinstance(sprite, BumpSprite) or isinstance(sprite, FeelWallSprite):
                 self.model.changes_in_rep[(key[0], key[1])] = self.model.wall
-            if isinstance(spright, FeelEmptySprite):
+            if isinstance(sprite, FeelEmptySprite):
                 self.model.changes_in_rep[(key[0], key[1])] = self.model.floor
-            if isinstance(spright, Wall) or isinstance(spright, Floor):
+                smell_color = mcolors.to_hex(self.model.smell_color_map(self.model.smell_grid[key[0]][key[1]] / self.model.max_smell))
+                self.model.changes_in_rep[(key[0], key[1])].set_smell(smell_color)
+            if isinstance(sprite, Wall) or isinstance(sprite, Floor):
                 self.model.changes_in_rep[(key[0], key[1])] = None
         self.model.changes_in_rep = {k: v for k, v in self.model.changes_in_rep.items() if v is not None}
 
@@ -106,6 +102,8 @@ class PyGameView(object):
         for x in range(w):
             for y in range(h):
                 if self.model.change_in_game_map[x][y]:
+                    smell_color = mcolors.to_hex(self.model.smell_color_map(self.model.smell_grid[x][y]/self.model.max_smell))
+                    self.model.game_map[x][y].set_smell(smell_color)
                     if isinstance(self.model.game_map[x][y], Character):
                         self.model.game_map[x][y].draw_representation_image(self, x, y, 90 * self.model.direction)
                     else:
@@ -113,8 +111,7 @@ class PyGameView(object):
 
     def draw_text(self, text, x, y, size, color=(100, 100, 100)):
         basicfont = pygame.font.SysFont(None, size)
-        text_render = basicfont.render(
-            text, True, color)
+        text_render = basicfont.render(text, True, color)
         self.surface.blit(text_render, (x, y))
 
 
@@ -145,9 +142,13 @@ class Model(object):
         self.outcome = STABLE
         self.changes_in_rep = {}
 
-        self.grid = np.zeros((GAME_MAP_GRID[0], GAME_MAP_GRID[1]), dtype=int)
+        self.env_grid = np.zeros((GAME_MAP_GRID[0], GAME_MAP_GRID[1]), dtype=int)
         self.character_current_floor = None
         self.change_in_game_map = np.full((GAME_MAP_GRID[0], GAME_MAP_GRID[1]), False, dtype=bool)
+        self.smell_grid = np.full(self.env_grid.shape, MAX_SMELL)
+        self.smell_graph = None
+        self.smell_color_map = mcolors.LinearSegmentedColormap.from_list("custom_gradient", ["#00ff00", "white"])
+        self.max_smell = MAX_SMELL
 
         # maze game setup
         self.make_singletons()
@@ -165,20 +166,32 @@ class Model(object):
         self.ai_controlled = ai_controlled
         self.time_counter = 0
 
+        # IMOSC setup
+        self.imosm = None
+        # The tracer
+        self.tracer = structlog.get_logger()
+        self.player_action = ''
+
     # This function updates the model
     def update(self):
 
         pprint('-------------------------------------------- TIME STEP %d --------------------------------------------'
             % self.time_counter, new_line_start=True, draw_line=False)
+
+        # Save the screenshot before incrementing time counter
+        pygame.image.save(view.screen, f"logs/{self.time_counter:04}.png")
+        # Save the trace of the previous interaction
+        trace_dict = {"step": self.time_counter, "action": self.player_action}
+
         self.time_counter += 1
 
         self.change_in_game_map[:, :] = False
 
-        player_action = 'nothing'
+        self.player_action = 'nothing'
 
         # get user input
         if not self.ai_controlled:
-            player_action = self.get_action()
+            self.player_action = self.get_action()
 
         # set environment values to current and output to ai
         self.current_environment()
@@ -194,12 +207,13 @@ class Model(object):
             player_action = ai.capture_current_environment(self.screen_input, self.aux_input)
             
             '''
+            self.player_action = ACTIONS_IMOSM_AIRIS[self.imosm.action(self.outcome)]
 
-        pprint('ACTION:\t%s' % player_action, new_line_start=True, draw_line=False)
+        pprint('ACTION:\t%s' % self.player_action, new_line_start=True, draw_line=False)
 
         # update the game according to the player's input
-        self.outcome = self.game_logic(player_action)
-        print(f"OUTCOME:\t{self.outcome}")
+        self.outcome = self.game_logic(self.player_action)
+        # print(f"OUTCOME:\t{self.outcome}")
 
         # go to next level if player beats the current level
         if self.batteries_collected == self.num_batteries:
@@ -212,8 +226,10 @@ class Model(object):
         # output post-action environment to ai
         self.current_environment()
 
-        # Save the screenshot
-        pygame.image.save(view.screen, f"logs/{self.time_counter:03}.png")
+        # Log the trace of this interaction
+        self.tracer = self.tracer.bind(**trace_dict)
+        self.tracer.info("", **self.imosm.trace_record)
+        self.tracer = self.tracer.new()
 
         '''
         Send the new self.screen_input and self.aux_input to your ai so that it can see what changed.
@@ -240,6 +256,13 @@ class Model(object):
     def game_logic(self, player_input):
 
         outcome = STABLE
+        front_position = self.character_current_pos + DIRECTIONS[self.direction]
+        left_position = self.character_current_pos + DIRECTIONS[(self.direction + 1) % 4]
+        right_position = self.character_current_pos + DIRECTIONS[self.direction - 1]
+        position_smell = self.smell_grid[tuple(self.character_current_pos)]
+        front_smell = self.smell_grid[tuple(front_position)]
+        left_smell = self.smell_grid[tuple(left_position)]
+        right_smell = self.smell_grid[tuple(right_position)]
 
         if player_input != 'nothing':
             character_new_pos = self.character_current_pos.copy()
@@ -254,25 +277,36 @@ class Model(object):
                 character_new_pos += np.array([1, 0])
             if player_input == 'forward':
                 character_new_pos += DIRECTIONS[self.direction]
+                new_front_pos = character_new_pos + DIRECTIONS[self.direction]
+                if new_front_pos[0] < 0 or new_front_pos[0] >= GAME_MAP_GRID[0] or new_front_pos[1] < 0 or new_front_pos[1] >= GAME_MAP_GRID[1]:
+                    new_front_smell = 0
+                else:
+                    new_front_smell = self.smell_grid[tuple(character_new_pos + DIRECTIONS[self.direction])]
+                outcome = STABLE + (new_front_smell < front_smell) - (new_front_smell > front_smell)
             if player_input == "turn_left":
-                self.direction = {LEFT: DOWN, DOWN: RIGHT, RIGHT: UP, UP: LEFT}[self.direction]
+                outcome = STABLE + (left_smell < front_smell) - (left_smell > front_smell)
+                self.direction = (self.direction + 1) % 4
             if player_input == "turn_right":
-                self.direction = {LEFT: UP, DOWN: LEFT, RIGHT: DOWN, UP: RIGHT}[self.direction]
-            if player_input == 'feel_left':
+                outcome = STABLE + (right_smell < front_smell) - (right_smell > front_smell)
+                self.direction = (self.direction + 3) % 4
+            if player_input == 'sniff_left':
                 feel_pos += DIRECTIONS[(self.direction + 1) % 4]
-            if player_input == 'feel_front':
+            if player_input == 'sniff_front':
                 feel_pos += DIRECTIONS[self.direction]
-            if player_input == 'feel_right':
+            if player_input == 'sniff_right':
                 feel_pos += DIRECTIONS[(self.direction - 1) % 4]
 
             # Display the feel interaction in the representation
             if not np.array_equal(feel_pos, self.character_current_pos):
-                if self.grid[feel_pos[0]][feel_pos[1]] == 2:
-                    self.changes_in_rep[(feel_pos[0], feel_pos[1])] = self.feel_wall_sprite
-                    return FEEL_WALL  # Don't smell
+                if self.env_grid[tuple(feel_pos)] == 2:  # WALL
+                    self.changes_in_rep[tuple(feel_pos)] = self.feel_wall_sprite
+                    feel_smell = self.smell_grid[tuple(feel_pos)]
+                    # outcome = STABLE + (feel_smell < position_smell) - (feel_smell > position_smell)
+                    return BUMP  # Don't smell
                 else:
-                    self.changes_in_rep[(feel_pos[0], feel_pos[1])] = self.feel_empty_sprite
-                    return STABLE  # Don't smell
+                    self.changes_in_rep[tuple(feel_pos)] = self.feel_empty_sprite
+                    feel_smell = self.smell_grid[tuple(feel_pos)]
+                    return STABLE + (feel_smell < position_smell) - (feel_smell > position_smell)
 
             new_tile = self.game_map[character_new_pos[0]][character_new_pos[1]]
             if isinstance(new_tile, Floor):
@@ -280,16 +314,17 @@ class Model(object):
 
             # Redraw the character for the case it turned in place
             elif isinstance(new_tile, Character):
-                self.change_in_game_map[self.character_current_pos[0]][self.character_current_pos[1]] = True
+                self.change_in_game_map[tuple(self.character_current_pos)] = True
 
             # Return the BUMP outcome
             elif isinstance(new_tile, Wall):
-                self.changes_in_rep[(character_new_pos[0], character_new_pos[1])] = self.bump_sprite
+                self.changes_in_rep[tuple(character_new_pos)] = self.bump_sprite
                 outcome = BUMP
 
             elif isinstance(new_tile, Battery):
                 self.move_character(new_tile, character_new_pos, self.character)
                 self.collect_battery(character_new_pos)
+                self.set_smell_grid()
                 outcome = EAT
 
             elif isinstance(new_tile, RightArrow):
@@ -334,10 +369,6 @@ class Model(object):
                 self.move_character(new_tile, character_new_pos, self.character)
                 self.collect_key(character_new_pos)
 
-        smell_outcome = self.smell()
-        # If not bump then smell_outcome
-        if not outcome:
-            outcome = smell_outcome
         return outcome
 
     def move_character(self, new_tile, character_new_pos, character_and_floor):
@@ -396,7 +427,7 @@ class Model(object):
                     self.num_batteries = row[2]
                 else:
                     # Initialize the grid
-                    self.grid[row[0]][row[1]] = row[2]
+                    self.env_grid[row[0]][row[1]] = row[2]
                     if row[2] == 1:
                         game_map[row[0]][row[1]] = self.character
                     if row[2] == 2:
@@ -425,7 +456,7 @@ class Model(object):
     def get_next_maze(self):
 
         # Refresh all tiles to be redrawn
-        self.grid[:, :] = 0
+        self.env_grid[:, :] = 0
         self.direction = UP
         self.change_in_game_map[:, :] = True
 
@@ -445,10 +476,40 @@ class Model(object):
                 interrupt = input()
                 raise Exception
 
+        # The smell graph
+        self.smell_graph = nx.Graph()
+        for r in range(self.env_grid.shape[0]):
+            for c in range(self.env_grid.shape[1]):
+                if self.env_grid[r, c] == WALL:
+                    continue  # skip walls
+                for dr, dc in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                    nr, nc = r + dr, c + dc
+                    if 0 <= nr < self.env_grid.shape[0] and 0 <= nc < self.env_grid.shape[1] and \
+                            self.env_grid[nr, nc] != WALL:
+                        self.smell_graph.add_edge((r, c), (nr, nc), weight=1)
+        self.set_smell_grid()
+
         self.batteries_collected = 0
         self.extinguishers_collected = 0
         self.keys_collected = 0
         self.maze_reset = False
+
+    def set_smell_grid(self):
+        """Set the smell grid. Called when the maze is loaded or when a target is eaten"""
+        # --- Identify target cells ---
+        targets = [(r, c) for r in range(self.env_grid.shape[0]) for c in range(self.env_grid.shape[1])
+                   if self.game_map[r][c].id == BATTERY]
+        # --- Compute shortest distances from each cell to the nearest target ---
+        self.smell_grid[:, :] = MAX_SMELL
+        for target in targets:
+            lengths = nx.single_source_dijkstra_path_length(self.smell_graph, target)
+            for (r, c), dist in lengths.items():
+                self.smell_grid[r, c] = min(self.smell_grid[r, c], dist)
+        print(self.smell_grid)
+        if len(targets) > 0:
+            self.max_smell = self.smell_grid[self.smell_grid != MAX_SMELL].max()
+        # Redraw entire map to show updated smell values
+        self.change_in_game_map[:, :] = True
 
     # these are helper functions for making maze levels
     def floor_init(self):
@@ -464,18 +525,22 @@ class Model(object):
         for x in range(left, right+1):
             game_map[x][y] = self.wall
         return game_map
+
     def draw_wall_col(self, game_map, bottom, top, x):
         for y in range(bottom, top+1):
             game_map[x][y] = self.wall
         return game_map
+
     def draw_fire_row(self, game_map, left, right, y):
         for x in range(left, right+1):
             game_map[x][y] = self.fire
         return game_map
+
     def draw_fire_col(self, game_map, bottom, top, x):
         for y in range(bottom, top+1):
             game_map[x][y] = self.fire
         return game_map
+
     def draw_arrow_row(self, game_map, left, right, y, type):
         for x in range(left, right+1):
             if type == 'r':
@@ -487,6 +552,7 @@ class Model(object):
             if type == 'd':
                 game_map[x][y] = self.down_arrow
         return game_map
+
     def draw_arrow_col(self, game_map, bottom, top, x, type):
         for y in range(bottom, top+1):
             if type == 'r':
@@ -521,28 +587,6 @@ class Model(object):
         self.bump_sprite = BumpSprite()
         self.feel_empty_sprite = FeelEmptySprite()
         self.feel_wall_sprite = FeelWallSprite()
-
-    def smell(self):
-        """Return the smell feedback"""
-        smell_up_left = np.any(self.grid[:self.character_current_pos[0] + 1,
-                               :self.character_current_pos[1] + 1] == BATTERY)
-        smell_down_left = np.any(self.grid[:self.character_current_pos[0] + 1,
-                                 self.character_current_pos[1]:] == BATTERY)
-        smell_up_right = np.any(self.grid[self.character_current_pos[0]:,
-                                :self.character_current_pos[1] + 1] == BATTERY)
-        smell_down_right = np.any(self.grid[self.character_current_pos[0]:,
-                                  self.character_current_pos[1]:] == BATTERY)
-        # print(f"Smell up-left:{smell_up_left}, up-right:{smell_up_right}, down-left:{smell_down_left}, down-right:{smell_down_right}")
-        smell_left = {LEFT: smell_down_left, DOWN: smell_down_right, RIGHT: smell_up_right, UP: smell_up_left}[
-            self.direction]
-        smell_right = {LEFT: smell_up_left, DOWN: smell_down_left, RIGHT: smell_down_right, UP: smell_up_right}[
-            self.direction]
-        smell = 2 * smell_left + smell_right
-        # print(f"Smell feedback: {smell:b}")
-        result = SMELL_FEEDBACK[self.previous_smell, smell]
-        # print(f"Result {result}")
-        self.previous_smell = smell
-        return result
 
 
 class PyGameKeyboardController(object):
@@ -623,15 +667,15 @@ class PyGameKeyboardController(object):
             number_of_keys_pressed += 1
         if keys[pygame.K_KP1]:
             is_there_input = True
-            self.player_input = 'feel_left'
+            self.player_input = 'sniff_left'
             number_of_keys_pressed += 1
         if keys[pygame.K_KP2]:
             is_there_input = True
-            self.player_input = 'feel_front'
+            self.player_input = 'sniff_front'
             number_of_keys_pressed += 1
         if keys[pygame.K_KP3]:
             is_there_input = True
-            self.player_input = 'feel_right'
+            self.player_input = 'sniff_right'
             number_of_keys_pressed += 1
 
         if number_of_keys_pressed > 0:
@@ -649,6 +693,9 @@ if __name__ == '__main__':
 
     # pygame setup
     ai_controlled = False
+    if sys.argv.__len__() > 1:
+        if sys.argv[1] == 'imo':
+            ai_controlled = True
     pygame.init()
     pygame.display.set_caption('Ai '+str(id(pygame)))
     print(f'\33]0;{id(pygame)}\a', end='', flush=True)
@@ -665,8 +712,56 @@ if __name__ == '__main__':
     # display the view initially
     if GAME_SHOW_SCREEN and view.show_view:
         view.draw()
-        view.screen.blit(view.surface, (0,0))
+        view.screen.blit(view.surface, (0, 0))
         pygame.display.update()
+
+    # Initialize the agent
+    interactions = [
+        Interaction(FORWARD, STABLE, -10),
+        Interaction(FORWARD, BUMP, -10),
+        Interaction(FORWARD, INCREASE, 10),
+        Interaction(FORWARD, DECREASE, -10),
+        Interaction(FORWARD, EAT, 10),
+        Interaction(TURN_LEFT, STABLE, -5),
+        Interaction(TURN_LEFT, INCREASE, 5),
+        Interaction(TURN_LEFT, DECREASE, -10),
+        Interaction(TURN_LEFT, EAT, 10),
+        Interaction(TURN_RIGHT, STABLE, -5),
+        Interaction(TURN_RIGHT, INCREASE, 5),
+        Interaction(TURN_RIGHT, DECREASE, -10),
+        Interaction(TURN_RIGHT, EAT, 10),
+    ]
+    interactions = [
+        Interaction(FORWARD, STABLE, 5),
+        Interaction(FORWARD, BUMP, -10),
+        Interaction(TURN_LEFT, STABLE, -3),
+        Interaction(TURN_LEFT, BUMP, -3),
+        Interaction(TURN_RIGHT, STABLE, -3),
+        Interaction(TURN_RIGHT, BUMP, -3),
+        Interaction(SNIFF_FRONT, STABLE, -1),
+        Interaction(SNIFF_FRONT, BUMP, -1),
+        Interaction(SNIFF_LEFT, STABLE, -1),
+        Interaction(SNIFF_LEFT, BUMP, -1),
+        Interaction(SNIFF_RIGHT, STABLE, -1),
+        Interaction(SNIFF_RIGHT, BUMP, -1),
+
+        Interaction(SNIFF_FRONT, DECREASE, -1),
+        Interaction(SNIFF_FRONT, INCREASE, -1),
+        Interaction(SNIFF_LEFT, DECREASE, -1),
+        Interaction(SNIFF_LEFT, INCREASE, -1),
+        Interaction(SNIFF_RIGHT, DECREASE, -1),
+        Interaction(SNIFF_RIGHT, INCREASE, -1),
+        Interaction(FORWARD, INCREASE, 10),
+        Interaction(FORWARD, DECREASE, -1),
+        Interaction(FORWARD, EAT, 5),
+        Interaction(TURN_LEFT, INCREASE, -1),
+        Interaction(TURN_LEFT, DECREASE, -5),
+        Interaction(TURN_LEFT, EAT, 1),
+        Interaction(TURN_RIGHT, INCREASE, -1),
+        Interaction(TURN_RIGHT, DECREASE, -5),
+        Interaction(TURN_RIGHT, EAT, 1),
+    ]
+    model.imosm = Agent(interactions)
 
     while running:
 
@@ -690,7 +785,7 @@ if __name__ == '__main__':
             # display the view
             if GAME_SHOW_SCREEN and view.show_view:
                 view.draw()
-                view.screen.blit(view.surface, (0,0))
+                view.screen.blit(view.surface, (0, 0))
                 pygame.display.update()
 
             # reset user input

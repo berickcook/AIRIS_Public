@@ -60,9 +60,32 @@ DEBUG_LOGFILE_PATH = './debug_log.txt'
 DEFAULT_INDENT = '|  '
 DEFAULT_DRAW_LINE = False
 
+###### INTERACTIONAL MOTIVATION #########
+
 FLOOR = 0
 CHARACTER = 1
 WALL = 2
 BATTERY = 3
 DOOR = 4
+
+MAX_SMELL = 100
+
+TRACE_HEADERS = ["step", "action", "code", "prediction", "outcome", "status", "valence", "i_length", "e_length", "nb_schemas"]
+TRACE_FILE = 'logs/00_trace.csv'
+
+FORWARD = 0
+SNIFF_FRONT = 1
+SNIFF_LEFT = 2
+SNIFF_RIGHT = 3
+TURN_LEFT = 4
+TURN_RIGHT = 5
+
+ACTIONS_IMOSM_AIRIS = ['forward', 'sniff_front', 'sniff_left', 'sniff_right', 'turn_right', 'turn_left']
+
+# Outcomes
+DECREASE = 0
+STABLE = 1
+INCREASE = 2
+BUMP = 3
+EAT = 4
 

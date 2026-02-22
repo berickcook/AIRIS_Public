@@ -1,7 +1,8 @@
 import pygame
 from pygame.locals import *
 import time
-from constants import GAME_MAP_START, GAME_POS_SIZE, REP_MAP_START, REP_POS_SIZE
+from constants import GAME_MAP_START, GAME_POS_SIZE, REP_MAP_START, REP_POS_SIZE, MAX_SMELL
+import matplotlib.colors as mcolors
 
 
 class GameObject(object):
@@ -21,10 +22,13 @@ class GameObject(object):
         im1 = pygame.image.load(self.game_image_file_path)
         self.image1 = pygame.transform.scale(im1, GAME_POS_SIZE)
 
-        # get representation image
+        # Get representation image
         self.representation_image_file_path = represent_file_path
         rep = pygame.image.load(self.representation_image_file_path)
         self.rep = pygame.transform.scale(rep, REP_POS_SIZE)
+
+        # Smell
+        self.smell_color = "white"
 
     def draw_game_image(self, view, x, y, direction=0):
         # map_start is the pixel coordnates of where the game map starts
@@ -44,17 +48,31 @@ class GameObject(object):
 
         pygame.display.flip()
 
-    def draw_representation_image(self, view, x, y, direction=0):
+    def draw_representation_image(self, view, x, y, direction=0, smell=100):
         # map_start is the pixel coordinates of where the game map starts
         # x and y are the position coordinates of this Floor object
 
+        # Draw the smell background
+        if self.id in [0, 1]:
+            smell_surface = pygame.Surface(REP_POS_SIZE)
+            smell_surface.fill(pygame.Color(self.smell_color))
+            view.surface.blit(smell_surface, (REP_MAP_START[0] + x * REP_POS_SIZE[0],
+                                              REP_MAP_START[1] + y * REP_POS_SIZE[1]))
+
         # draw representation image
-        rotated_image = pygame.transform.rotate(self.rep, direction)
-        view.surface.blit(rotated_image,
-                          (REP_MAP_START[0] + x * REP_POS_SIZE[0],
-                           REP_MAP_START[1] + y * REP_POS_SIZE[1]))
+        if self.id != 0:
+            rotated_image = pygame.transform.rotate(self.rep, direction)
+            view.surface.blit(rotated_image, (REP_MAP_START[0] + x * REP_POS_SIZE[0],
+                                              REP_MAP_START[1] + y * REP_POS_SIZE[1]))
 
         pygame.display.flip()
+
+    def set_smell(self, smell_color):
+        """Display the smell in the background"""
+        if self.id in [0, 1]:
+            self.smell_color = smell_color
+            # self.rep = pygame.Surface(REP_POS_SIZE)
+            # self.rep.fill(pygame.Color(smell_color))
 
 
 ''' Types of Objects:
